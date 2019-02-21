@@ -1,5 +1,5 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.2.1" // Bootstrap with previous version.
+  id("org.metaborg.gradle.config.root-project") version "0.2.3" // Bootstrap with previous version.
   id("org.metaborg.gitonium") version "0.1.0"
   kotlin("jvm") version "1.3.20"
   `kotlin-dsl`
