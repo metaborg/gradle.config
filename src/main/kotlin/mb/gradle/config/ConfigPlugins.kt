@@ -180,10 +180,13 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
 }
 
 private fun Project.configureWrapper() {
-  tasks.getting(Wrapper::class) {
-    gradleVersion = "5.2.1"
-    distributionType = Wrapper.DistributionType.ALL
-    setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
+  pluginManager.apply("wrapper")
+  tasks {
+    named<Wrapper>("wrapper") {
+      gradleVersion = "5.2.1"
+      distributionType = Wrapper.DistributionType.ALL
+      setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
+    }
   }
 }
 
