@@ -5,6 +5,7 @@ import org.gradle.api.plugins.*
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
@@ -100,11 +101,13 @@ private fun Project.configureAnyProject() {
 private fun Project.configureRootProject() {
   configureAnyProject()
   createCompositeBuildTasks()
+  configureWrapper()
 }
 
 private fun Project.configureSubProject() {
   configureAnyProject()
-  // Only root project needs composite build tasks, as these tasks depend on tasks for subprojects.
+  // Only root project needs composite build tasks, as these tasks depend on tasks for sub-projects.
+  // Only root project needs wrapper configuration.
 }
 
 //
@@ -117,9 +120,9 @@ private fun Project.configureGroup() {
 
 private fun Project.configureRepositories() {
   repositories {
-    maven(url = "https://artifacts.metaborg.org/content/repositories/central/")
     maven(url = "https://artifacts.metaborg.org/content/repositories/releases/")
     maven(url = "https://artifacts.metaborg.org/content/repositories/snapshots/")
+    maven(url = "https://artifacts.metaborg.org/content/repositories/central/")
     mavenCentral() // Backup
   }
 }
@@ -173,6 +176,14 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
         }
       })
     }
+  }
+}
+
+private fun Project.configureWrapper() {
+  tasks.getting(Wrapper::class) {
+    gradleVersion = "5.2.1"
+    distributionType = Wrapper.DistributionType.ALL
+    setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
   }
 }
 
