@@ -1,15 +1,12 @@
 plugins {
   id("org.metaborg.gradle.config.root-project") version "0.2.1" // Bootstrap with previous version.
-  //id("org.metaborg.gitonium") version "0.3.0"
+  id("org.metaborg.gitonium") version "0.1.0"
   kotlin("jvm") version "1.3.20"
   `kotlin-dsl`
   `java-gradle-plugin`
   publishing
   `maven-publish`
 }
-
-group = "org.metaborg"
-version = "master-SNAPSHOT"
 
 dependencies {
   compile("org.eclipse.jgit:org.eclipse.jgit:5.2.0.201812061821-r")
