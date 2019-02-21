@@ -99,6 +99,7 @@ private fun Project.configureAnyProject() {
 }
 
 private fun Project.configureRootProject() {
+  configureVersion()
   configureAnyProject()
   createCompositeBuildTasks()
   configureWrapper()
@@ -106,6 +107,7 @@ private fun Project.configureRootProject() {
 
 private fun Project.configureSubProject() {
   configureAnyProject()
+  // Only root project needs version configuration, as the gitonium plugin handles sub-projects.
   // Only root project needs composite build tasks, as these tasks depend on tasks for sub-projects.
   // Only root project needs wrapper configuration.
 }
@@ -116,6 +118,10 @@ private fun Project.configureSubProject() {
 
 private fun Project.configureGroup() {
   group = "org.metaborg"
+}
+
+private fun Project.configureVersion() {
+  pluginManager.apply("org.metaborg.gitonium")
 }
 
 private fun Project.configureRepositories() {
