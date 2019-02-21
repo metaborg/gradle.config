@@ -260,6 +260,7 @@ fun Project.configureJavaApplication() {
 private fun Project.configureKotlinVersion() {
   tasks.withType<KotlinCompile>().all {
     kotlinOptions.jvmTarget = "1.8"
+    kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=compatibility")
   }
 }
 
