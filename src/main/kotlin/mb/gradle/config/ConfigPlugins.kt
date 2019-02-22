@@ -89,19 +89,18 @@ class JUnitTestingPlugin : Plugin<Project> {
 // Extension.
 //
 
-open class Config {
+@Suppress("unused")
+open class MetaborgExtension(private val project: Project) {
+  companion object {
+    const val name = "metaborg"
+  }
+
+
   var gradleWrapperVersion = "5.2.1"
   var javaVersion = JavaVersion.VERSION_1_8
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
   var junitVersion = "5.4.0"
-}
-
-@Suppress("unused")
-open class MetaborgExtension(private val project: Project, val config: Config) {
-  companion object {
-    const val name = "metaborg"
-  }
 
 
   fun configureSubProject() {
@@ -117,6 +116,10 @@ open class MetaborgExtension(private val project: Project, val config: Config) {
     project.configureJavaApplication()
   }
 
+  fun configureJavaGradlePlugin() {
+    project.configureJavaGradlePlugin()
+  }
+
 
   fun configureKotlinLibrary() {
     project.configureKotlinLibrary()
@@ -124,6 +127,10 @@ open class MetaborgExtension(private val project: Project, val config: Config) {
 
   fun configureKotlinApplication() {
     project.configureKotlinApplication()
+  }
+
+  fun configureKotlinGradlePlugin() {
+    project.configureKotlinGradlePlugin()
   }
 
 
@@ -157,13 +164,12 @@ private fun Project.configureAnyProject() {
   configureGroup()
   configureRepositories()
   configurePublishingRepositories()
-  val config = Config() // Config is shared between root project and sub-projects.
   if(extensions.findByName(MetaborgExtension.name) == null) {
-    extensions.add(MetaborgExtension.name, MetaborgExtension(this, config))
+    extensions.add(MetaborgExtension.name, MetaborgExtension(this))
   }
   subprojects {
     if(extensions.findByName(MetaborgExtension.name) == null) {
-      extensions.add(MetaborgExtension.name, MetaborgExtension(this, config))
+      extensions.add(MetaborgExtension.name, MetaborgExtension(this))
     }
   }
 }
@@ -243,11 +249,11 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
 }
 
 private fun Project.configureWrapper() {
-  val config = extensions.getByType<MetaborgExtension>().config
+  val extension = extensions.getByType<MetaborgExtension>()
   pluginManager.apply("wrapper")
   tasks {
     named<Wrapper>("wrapper") {
-      gradleVersion = config.gradleWrapperVersion
+      gradleVersion = extension.gradleWrapperVersion
       distributionType = Wrapper.DistributionType.ALL
       setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
     }
@@ -259,10 +265,10 @@ private fun Project.configureWrapper() {
 //
 
 private fun Project.configureJavaVersion() {
-  val config = extensions.getByType<MetaborgExtension>().config
+  val extension = extensions.getByType<MetaborgExtension>()
   configure<JavaPluginExtension> {
-    sourceCompatibility = config.javaVersion
-    targetCompatibility = config.javaVersion
+    sourceCompatibility = extension.javaVersion
+    targetCompatibility = extension.javaVersion
   }
 }
 
@@ -290,7 +296,7 @@ fun Project.configureJavaLibrary() {
 private fun Project.configureJavaExecutableJar(publicationName: String) {
   // Create additional JAR task that creates an executable JAR.
   val jarTask = tasks.getByName<Jar>(JavaPlugin.JAR_TASK_NAME)
-  val executableJarTask = tasks.register("executableJar", Jar::class) {
+  val executableJarTask = tasks.register("executableJar", Jar::class.java) {
     manifest {
       attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
     }
@@ -329,11 +335,11 @@ fun Project.configureJavaGradlePlugin() {
 //
 
 private fun Project.configureKotlinCompiler() {
-  val config = extensions.getByType<MetaborgExtension>().config
+  val extension = extensions.getByType<MetaborgExtension>()
   tasks.withType<KotlinCompile>().all {
-    kotlinOptions.apiVersion = config.kotlinApiVersion
-    kotlinOptions.languageVersion = config.kotlinLanguageVersion
-    kotlinOptions.jvmTarget = when(config.javaVersion) {
+    kotlinOptions.apiVersion = extension.kotlinApiVersion
+    kotlinOptions.languageVersion = extension.kotlinLanguageVersion
+    kotlinOptions.jvmTarget = when(extension.javaVersion) {
       JavaVersion.VERSION_1_6 -> "1.6"
       else -> "1.8"
     }
@@ -381,10 +387,10 @@ fun Project.configureKotlinGradlePlugin() {
     configureJavaVersion()
     configureKotlinCompiler()
     // Do not configure Kotlin stdlib, since the 'kotlin-dsl' plugin already does this.
-    val config = extensions.getByType<MetaborgExtension>().config
+    val extension = extensions.getByType<MetaborgExtension>()
     extensions.configure<KotlinDslPluginOptions> {
       experimentalWarning.set(false)
-      jvmTarget.set(when(config.javaVersion) {
+      jvmTarget.set(when(extension.javaVersion) {
         JavaVersion.VERSION_1_6 -> "1.6"
         else -> "1.8"
       })
@@ -397,8 +403,8 @@ fun Project.configureKotlinGradlePlugin() {
 //
 
 private fun Project.configureJUnit() {
-  val config = extensions.getByType<MetaborgExtension>().config
-  val junitVersion = config.junitVersion
+  val extension = extensions.getByType<MetaborgExtension>()
+  val junitVersion = extension.junitVersion
   val testImplementation by configurations
   val testRuntimeOnly by configurations
   dependencies {
