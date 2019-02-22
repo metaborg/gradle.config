@@ -321,11 +321,7 @@ fun Project.configureJavaApplication() {
 }
 
 fun Project.configureJavaGradlePlugin() {
-  pluginManager.apply("java-gradle-plugin")
-  // Configure afterEvaluate, because it uses a property from an extension.
-  afterEvaluate {
-    configureJavaVersion()
-  }
+  configureGradlePlugin()
 }
 
 //
@@ -377,9 +373,9 @@ fun Project.configureKotlinApplication() {
 }
 
 fun Project.configureKotlinGradlePlugin() {
-  pluginManager.apply("java-gradle-plugin")
   pluginManager.apply("org.jetbrains.kotlin.jvm")
-  pluginManager.apply("kotlin-dsl")
+  pluginManager.apply("org.gradle.kotlin.kotlin-dsl")
+  configureGradlePlugin()
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
     configureJavaVersion()
@@ -418,5 +414,16 @@ fun Project.configureJunitTesting() {
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
     configureJUnit()
+  }
+}
+
+//
+// Gradle plugin.
+//
+
+private fun Project.configureGradlePlugin() {
+  pluginManager.apply("java-gradle-plugin")
+  repositories {
+    gradlePluginPortal() // Add plugin portal as a repository, to be able to depend on Gradle plugins.
   }
 }
