@@ -266,6 +266,7 @@ private fun Project.configureWrapper() {
 
 private fun Project.configureJavaVersion() {
   val extension = extensions.getByType<MetaborgExtension>()
+  @Suppress("UnstableApiUsage")
   configure<JavaPluginExtension> {
     sourceCompatibility = extension.javaVersion
     targetCompatibility = extension.javaVersion
@@ -298,11 +299,15 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
   val jarTask = tasks.getByName<Jar>(JavaPlugin.JAR_TASK_NAME)
   val executableJarTask = tasks.register("executableJar", Jar::class.java) {
     manifest {
+      @Suppress("UnstableApiUsage")
       attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
     }
     archiveClassifier.set("executable")
     val runtimeClasspath by configurations
-    from(runtimeClasspath.filter { it.exists() }.map { if(it.isDirectory) it else zipTree(it) })
+    from(runtimeClasspath.filter { it.exists() }.map {
+      @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, because `from` takes Any.
+      if(it.isDirectory) it else zipTree(it)
+    })
     with(jarTask)
   }
   tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(executableJarTask)
@@ -412,6 +417,7 @@ private fun Project.configureJUnit() {
     testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
   }
   tasks.withType<Test> {
+    @Suppress("UnstableApiUsage")
     useJUnitPlatform()
   }
 }
@@ -429,7 +435,9 @@ fun Project.configureJunitTesting() {
 
 private fun Project.configureGradlePlugin() {
   pluginManager.apply("java-gradle-plugin")
+  pluginManager.apply("maven-publish")
   repositories {
+    @Suppress("UnstableApiUsage")
     gradlePluginPortal() // Add plugin portal as a repository, to be able to depend on Gradle plugins.
   }
 }
