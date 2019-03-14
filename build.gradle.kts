@@ -51,6 +51,10 @@ gradlePlugin {
       id = "org.metaborg.gradle.config.kotlin-application"
       implementationClass = "mb.gradle.config.KotlinApplicationPlugin"
     }
+    create("metaborg-kotlin-testing-only") {
+      id = "org.metaborg.gradle.config.kotlin-testing-only"
+      implementationClass = "mb.gradle.config.KotlinTestingOnlyPlugin"
+    }
     create("metaborg-kotlin-gradle-plugin") {
       id = "org.metaborg.gradle.config.kotlin-gradle-plugin"
       implementationClass = "mb.gradle.config.KotlinGradlePluginPlugin"

@@ -1,14 +1,23 @@
 package mb.gradle.config
 
-import org.gradle.api.*
-import org.gradle.api.plugins.*
+import org.gradle.api.JavaVersion
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaApplication
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
+import org.gradle.api.tasks.SourceSet
+import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
+import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
@@ -71,6 +80,13 @@ class KotlinApplicationPlugin : Plugin<Project> {
 }
 
 @Suppress("unused")
+class KotlinTestingOnlyPlugin : Plugin<Project> {
+  override fun apply(project: Project) {
+    project.configureKotlinTestingOnly()
+  }
+}
+
+@Suppress("unused")
 class KotlinGradlePluginPlugin : Plugin<Project> {
   override fun apply(project: Project) {
     project.configureKotlinGradlePlugin()
@@ -127,6 +143,10 @@ open class MetaborgExtension(private val project: Project) {
 
   fun configureKotlinApplication() {
     project.configureKotlinApplication()
+  }
+
+  fun configureKotlinTestingOnly() {
+    project.configureKotlinTestingOnly()
   }
 
   fun configureKotlinGradlePlugin() {
@@ -352,11 +372,10 @@ private fun Project.configureKotlinCompiler() {
   }
 }
 
-private fun Project.configureKotlinStdlib() {
-  val implementation by configurations
+private fun Project.configureKotlinStdlib(configuration: Configuration) {
   dependencies {
-    implementation(kotlin("stdlib"))
-    implementation(kotlin("stdlib-jdk8"))
+    configuration(kotlin("stdlib"))
+    configuration(kotlin("stdlib-jdk8"))
   }
 }
 
@@ -366,7 +385,7 @@ fun Project.configureKotlinLibrary() {
   afterEvaluate {
     configureJavaVersion()
     configureKotlinCompiler()
-    configureKotlinStdlib()
+    configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaPublication("KotlinLibrary")
   }
 }
@@ -378,8 +397,25 @@ fun Project.configureKotlinApplication() {
   afterEvaluate {
     configureJavaVersion()
     configureKotlinCompiler()
-    configureKotlinStdlib()
+    configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaExecutableJar("KotlinApplication")
+  }
+}
+
+fun Project.configureKotlinTestingOnly() {
+  pluginManager.apply("org.jetbrains.kotlin.jvm")
+  // Configure afterEvaluate, because it uses a property from an extension.
+  afterEvaluate {
+    configureJavaVersion()
+    configureKotlinCompiler()
+    configureKotlinStdlib(configurations.getByName("testImplementation"))
+    // Remove src/main/kotlin source set.
+    project.configure<SourceSetContainer> {
+      val mainSourceSet = getByName(SourceSet.MAIN_SOURCE_SET_NAME)
+      mainSourceSet.withConvention(KotlinSourceSet::class) {
+        kotlin.setSrcDirs(mutableListOf<Any>())
+      }
+    }
   }
 }
 
