@@ -409,13 +409,6 @@ fun Project.configureKotlinTestingOnly() {
     configureJavaVersion()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("testImplementation"))
-    // Remove src/main/kotlin source set.
-    project.configure<SourceSetContainer> {
-      val mainSourceSet = getByName(SourceSet.MAIN_SOURCE_SET_NAME)
-      mainSourceSet.withConvention(KotlinSourceSet::class) {
-        kotlin.setSrcDirs(mutableListOf<Any>())
-      }
-    }
   }
 }
 
