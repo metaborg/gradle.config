@@ -4,20 +4,17 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.plugins.BasePlugin
-import org.gradle.api.plugins.JavaApplication
-import org.gradle.api.plugins.JavaPlugin
-import org.gradle.api.plugins.JavaPluginExtension
+import org.gradle.api.plugins.*
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
+import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
-import org.jetbrains.kotlin.gradle.plugin.KotlinSourceSet
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
@@ -114,6 +111,11 @@ open class MetaborgExtension(private val project: Project) {
 
   var gradleWrapperVersion = "5.2.1"
   var javaVersion = JavaVersion.VERSION_1_8
+  var javaCreatePublication = true
+  var javaCreateSourcesJar = true
+  var javaPublishSourcesJar = true
+  var javaCreateJavadocJar = true
+  var javaPublishJavadocJar = true
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
   var junitVersion = "5.4.0"
@@ -284,21 +286,76 @@ private fun Project.configureWrapper() {
 // Java configuration.
 //
 
-private fun Project.configureJavaVersion() {
+private fun Project.configureJavaCompiler() {
   val extension = extensions.getByType<MetaborgExtension>()
   @Suppress("UnstableApiUsage")
   configure<JavaPluginExtension> {
     sourceCompatibility = extension.javaVersion
     targetCompatibility = extension.javaVersion
   }
+  tasks.withType<JavaCompile> {
+    options.encoding = "UTF-8"
+  }
+}
+
+private fun Project.configureJavaSourcesJar() {
+  val extension = extensions.getByType<MetaborgExtension>()
+  if(!extension.javaCreateSourcesJar) {
+    return
+  }
+
+  tasks.create<Jar>("sourcesJar") {
+    dependsOn(tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
+    from(the<SourceSetContainer>().getByName(SourceSet.MAIN_SOURCE_SET_NAME).allJava)
+    archiveClassifier.set("sources")
+  }
+}
+
+private fun Project.configureJavadocJar() {
+  val extension = extensions.getByType<MetaborgExtension>()
+  if(!extension.javaCreateJavadocJar) {
+    return
+  }
+
+  tasks.create<Jar>("javadocJar") {
+    val javadocTask =tasks.getByName(JavaPlugin.JAVADOC_TASK_NAME)
+    dependsOn(javadocTask)
+    from(javadocTask)
+    archiveClassifier.set("javadoc")
+  }
 }
 
 private fun Project.configureJavaPublication(name: String, additionalConfiguration: MavenPublication.() -> Unit = {}) {
+  val extension = extensions.getByType<MetaborgExtension>()
+  if(!extension.javaCreatePublication) {
+    return
+  }
+
   pluginManager.apply("maven-publish")
   configure<PublishingExtension> {
     publications {
       create<MavenPublication>(name) {
+        // Add primary artifact.
         from(project.components["java"])
+        // Add sources JAR artifact.
+        if(extension.javaPublishSourcesJar) {
+          val sourcesJarTask = tasks.findByName("sourcesJar")
+          if(sourcesJarTask != null) {
+            artifact(sourcesJarTask) {
+              classifier = "sources"
+            }
+          }
+        }
+        // Add javadoc JAR artifact.
+        if(extension.javaPublishJavadocJar) {
+          val javadocJarTask = tasks.findByName("javadocJar")
+          if(javadocJarTask != null) {
+            artifact(javadocJarTask) {
+              classifier = "javadoc"
+            }
+          }
+        }
+        // Run any additional configuration
         additionalConfiguration()
       }
     }
@@ -309,7 +366,9 @@ fun Project.configureJavaLibrary() {
   pluginManager.apply("java-library")
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
+    configureJavaSourcesJar()
+    configureJavadocJar()
     configureJavaPublication("JavaLibrary")
   }
 }
@@ -346,7 +405,9 @@ fun Project.configureJavaApplication() {
   pluginManager.apply("application")
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
+    configureJavaSourcesJar()
+    configureJavadocJar()
     configureJavaExecutableJar("JavaApplication")
   }
 }
@@ -383,7 +444,7 @@ fun Project.configureKotlinLibrary() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaPublication("KotlinLibrary")
@@ -395,7 +456,7 @@ fun Project.configureKotlinApplication() {
   pluginManager.apply("application")
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaExecutableJar("KotlinApplication")
@@ -406,7 +467,7 @@ fun Project.configureKotlinTestingOnly() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("testImplementation"))
   }
@@ -418,7 +479,7 @@ fun Project.configureKotlinGradlePlugin() {
   configureGradlePlugin()
   // Configure afterEvaluate, because it uses a property from an extension.
   afterEvaluate {
-    configureJavaVersion()
+    configureJavaCompiler()
     configureKotlinCompiler()
     // Do not configure Kotlin stdlib, since the 'kotlin-dsl' plugin already does this.
     val extension = extensions.getByType<MetaborgExtension>()
