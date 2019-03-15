@@ -4,7 +4,11 @@ import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
-import org.gradle.api.plugins.*
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.plugins.BasePlugin
+import org.gradle.api.plugins.JavaApplication
+import org.gradle.api.plugins.JavaPlugin
+import org.gradle.api.plugins.JavaPluginExtension
 import org.gradle.api.publish.PublishingExtension
 import org.gradle.api.publish.maven.MavenPublication
 import org.gradle.api.tasks.SourceSet
@@ -304,12 +308,15 @@ private fun Project.configureJavaSourcesJar() {
     return
   }
 
-
   val sourceSets = extensions.getByType<SourceSetContainer>()
-  tasks.create<Jar>("sourcesJar") {
+  val sourcesJarTask = tasks.create<Jar>("sourcesJar") {
     dependsOn(tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
     from(sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).allJava)
     archiveClassifier.set("sources")
+  }
+  tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(sourcesJarTask)
+  artifacts.add(Dependency.DEFAULT_CONFIGURATION, sourcesJarTask) {
+    classifier = "sources"
   }
 }
 
@@ -319,11 +326,15 @@ private fun Project.configureJavadocJar() {
     return
   }
 
-  tasks.create<Jar>("javadocJar") {
-    val javadocTask =tasks.getByName(JavaPlugin.JAVADOC_TASK_NAME)
+  val javadocJarTask = tasks.create<Jar>("javadocJar") {
+    val javadocTask = tasks.getByName(JavaPlugin.JAVADOC_TASK_NAME)
     dependsOn(javadocTask)
     from(javadocTask)
     archiveClassifier.set("javadoc")
+  }
+  tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(javadocJarTask)
+  artifacts.add(Dependency.DEFAULT_CONFIGURATION, javadocJarTask) {
+    classifier = "javadoc"
   }
 }
 
