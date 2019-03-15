@@ -304,9 +304,11 @@ private fun Project.configureJavaSourcesJar() {
     return
   }
 
+
+  val sourceSets = extensions.getByType<SourceSetContainer>()
   tasks.create<Jar>("sourcesJar") {
     dependsOn(tasks.getByName(JavaPlugin.CLASSES_TASK_NAME))
-    from(the<SourceSetContainer>().getByName(SourceSet.MAIN_SOURCE_SET_NAME).allJava)
+    from(sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME).allJava)
     archiveClassifier.set("sources")
   }
 }
