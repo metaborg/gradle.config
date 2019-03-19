@@ -108,7 +108,6 @@ class DevenvPlugin : Plugin<Project> {
           println("Status for repository ${repo.dirPath}:")
           repo.status(project)
           println()
-          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: show its status"
@@ -121,6 +120,7 @@ class DevenvPlugin : Plugin<Project> {
           if(dir.exists()) continue
           println("Cloning repository ${repo.dirPath}:")
           repo.clone(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: clone the repository if it has not been cloned yet."
@@ -131,6 +131,7 @@ class DevenvPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Fetching for repository ${repo.dirPath}:")
           repo.fetch(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: fetch from the main remote."
@@ -141,6 +142,7 @@ class DevenvPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Checking out ${repo.branch} for repository ${repo.dirPath}:")
           repo.checkout(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: checkout the correct branch."
@@ -169,6 +171,7 @@ class DevenvPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Pushing current branch for repository ${repo.dirPath}:")
           repo.push(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: push the current local branch to the main remote."
@@ -179,6 +182,7 @@ class DevenvPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Pushing all branches for repository ${repo.dirPath}:")
           repo.pushAll(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: push all local branches to the main remote."
@@ -189,6 +193,7 @@ class DevenvPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Pushing all branches for repository ${repo.dirPath}:")
           repo.pushAllTags(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: push all local tags to the main remote."
