@@ -125,6 +125,26 @@ class DevenvPlugin : Plugin<Project> {
       }
       description = "For each Git repository of devenv for which update is set to true: clone the repository if it has not been cloned yet."
     }
+    project.tasks.register<GitTask>("repoFetch") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Fetching for repository ${repo.dirPath}:")
+          repo.fetch(project)
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: fetch from the main remote."
+    }
+    project.tasks.register<GitTask>("repoCheckout") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Checking out ${repo.branch} for repository ${repo.dirPath}:")
+          repo.checkout(project)
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: checkout the correct branch."
+    }
     project.tasks.register<GitTask>("repoUpdate") {
       doLast {
         for(repo in repos) {
@@ -142,6 +162,36 @@ class DevenvPlugin : Plugin<Project> {
         }
       }
       description = "For each Git repository of devenv for which update is set to true: check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
+    }
+    project.tasks.register<GitTask>("repoPush") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing current branch for repository ${repo.dirPath}:")
+          repo.push(project)
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push the current local branch to the main remote."
+    }
+    project.tasks.register<GitTask>("repoPushAll") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing all branches for repository ${repo.dirPath}:")
+          repo.pushAll(project)
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push all local branches to the main remote."
+    }
+    project.tasks.register<GitTask>("repoPushAllTags") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing all branches for repository ${repo.dirPath}:")
+          repo.pushAllTags(project)
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push all local tags to the main remote."
     }
   }
 }
@@ -192,12 +242,28 @@ data class Repo(val name: String, val update: Boolean, val url: String, val bran
     execGitCmdInRoot(project, "clone", "--quiet", "--recurse-submodules", "--branch", branch, url, dirPath)
   }
 
+  fun fetch(project: Project) {
+    execGitCmd(project, "fetch", "--quiet", "--recurse-submodules")
+  }
+
   fun checkout(project: Project) {
     execGitCmd(project, "checkout", "--quiet", branch)
   }
 
   fun pull(project: Project) {
     execGitCmd(project, "pull", "--quiet", "--recurse-submodules", "--rebase")
+  }
+
+  fun push(project: Project) {
+    execGitCmd(project, "push")
+  }
+
+  fun pushAllTags(project: Project) {
+    execGitCmd(project, "push", "--tags")
+  }
+
+  fun pushAll(project: Project) {
+    execGitCmd(project, "push", "--all")
   }
 
 
