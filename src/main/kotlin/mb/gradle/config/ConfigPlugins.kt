@@ -15,8 +15,11 @@ import org.gradle.api.tasks.SourceSet
 import org.gradle.api.tasks.SourceSetContainer
 import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
+import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.wrapper.Wrapper
+import org.gradle.buildinit.plugins.BuildInitPlugin
+import org.gradle.buildinit.plugins.WrapperPlugin
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -118,8 +121,8 @@ open class MetaborgExtension(private val project: Project) {
   var javaCreatePublication = true
   var javaCreateSourcesJar = true
   var javaPublishSourcesJar = true
-  var javaCreateJavadocJar = true
-  var javaPublishJavadocJar = true
+  var javaCreateJavadocJar = false
+  var javaPublishJavadocJar = false
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
   var junitVersion = "5.4.0"
@@ -321,6 +324,18 @@ private fun Project.configureJavaSourcesJar() {
 }
 
 private fun Project.configureJavadocJar() {
+  tasks {
+    named<Javadoc>(JavaPlugin.JAVADOC_TASK_NAME) {
+      isFailOnError = false
+
+      val optionsFile = temporaryDir.resolve("javadoc_options.txt")
+      optionsFile.writeText("-Xdoclint:none\n")
+      options {
+        optionFiles(optionsFile)
+      }
+    }
+  }
+
   val extension = extensions.getByType<MetaborgExtension>()
   if(!extension.javaCreateJavadocJar) {
     return
@@ -389,22 +404,29 @@ fun Project.configureJavaLibrary() {
 private fun Project.configureJavaExecutableJar(publicationName: String) {
   // Create additional JAR task that creates an executable JAR.
   val jarTask = tasks.getByName<Jar>(JavaPlugin.JAR_TASK_NAME)
-  val executableJarTask = tasks.register("executableJar", Jar::class.java) {
+  val executableJarTask = tasks.register<Jar>("executableJar") {
+    val runtimeClasspath by configurations
+    dependsOn(runtimeClasspath)
+
     manifest {
       @Suppress("UnstableApiUsage")
       attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
     }
     archiveClassifier.set("executable")
-    val runtimeClasspath by configurations
-    from(runtimeClasspath.filter { it.exists() }.map {
-      @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, because `from` takes Any.
-      if(it.isDirectory) it else zipTree(it)
-    })
+
     with(jarTask)
+
+    // Configure from runtime classpath at task execution time. TODO: does this properly configure the Jar task?
+    doFirst {
+      from(runtimeClasspath.filter { it.exists() }.map {
+        @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, because `from` takes Any.
+        if(it.isDirectory) it else zipTree(it)
+      })
+    }
   }
   tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(executableJarTask)
   // Create an artifact for the executable JAR.
-  val executableJarArtifact = artifacts.add("archives", executableJarTask) {
+  val executableJarArtifact = artifacts.add(Dependency.DEFAULT_CONFIGURATION, executableJarTask) {
     classifier = "executable"
   }
   // Publish primary artifact from the Java component, and publish executable JAR and ZIP distribution as secondary artifacts.
