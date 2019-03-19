@@ -4,7 +4,12 @@ import org.eclipse.jgit.errors.RepositoryNotFoundException
 import org.eclipse.jgit.lib.Constants
 import org.eclipse.jgit.lib.Repository
 import org.eclipse.jgit.storage.file.FileRepositoryBuilder
-import org.gradle.api.*
+import org.gradle.api.DefaultTask
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
+import org.gradle.kotlin.dsl.getByType
+import org.gradle.kotlin.dsl.register
 import java.io.File
 import java.nio.file.Files
 import java.nio.file.Path
@@ -16,129 +21,149 @@ class DevenvPlugin : Plugin<Project> {
     val extension = DevenvExtension(project)
     project.extensions.add("devenv", extension)
     project.afterEvaluate {
-      configure(this, extension)
+      configure(this)
     }
   }
 
-  private fun configure(project: Project, extension: DevenvExtension) {
-    project.tasks.register("updateRepos") {
+
+  open class GitTask : DefaultTask() {
+    init {
       group = "devenv"
-      description = "For each Git repository of devenv for which update is set to true: check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
-      doLast {
-        val projectDir = project.projectDir
-        val urlPrefix = extension.repoUrlPrefix
-          ?: throw GradleException("Cannot update repositories of devenv; URL prefix has not been set")
-        val rootBranch = try {
-          gitBranch(projectDir)
-        } catch(e: GradleException) {
-          throw GradleException("Cannot update repositories of devenv; current branch cannot be retrieved", e)
-        }
-        val properties = run {
-          val file = projectDir.resolve("repo.properties").toPath()
-          properties(file)
-        }
-        for(repoConfig in extension.repos) {
-          val repo = toRepo(repoConfig, urlPrefix, rootBranch, properties)
-          updateGitRepo(repo, project)
+    }
+
+    private val extension = project.extensions.getByType<DevenvExtension>()
+
+    private val properties: Properties = run {
+      val file = project.projectDir.resolve("repo.properties").toPath()
+      properties(file)
+    }
+
+
+    val urlPrefix: String = extension.repoUrlPrefix
+      ?: throw GradleException("Cannot update repositories of devenv; URL prefix has not been set")
+
+    val rootBranch: String = try {
+      gitBranch(project.projectDir)
+    } catch(e: GradleException) {
+      throw GradleException("Cannot update repositories of devenv; current branch cannot be retrieved", e)
+    }
+
+    val repos = extension.repos.map { toRepo(it, urlPrefix, rootBranch, properties) }
+
+
+    private fun gitBranch(dir: File): String {
+      return try {
+        FileRepositoryBuilder().readEnvironment().findGitDir(dir).setMustExist(true).build()
+      } catch(e: RepositoryNotFoundException) {
+        throw GradleException("Cannot retrieve current branch name because no git repository was found at '$dir'", e)
+      }.use { repo ->
+        // Use repository with 'use' to close repository after use, freeing up resources.
+        val headRef = repo.exactRef(Constants.HEAD)
+          ?: throw GradleException("Cannot retrieve current branch name because repository has no HEAD")
+        if(headRef.isSymbolic) {
+          Repository.shortenRefName(headRef.target.name)
+        } else {
+          throw GradleException("Cannot retrieve current branch name because repository HEAD is not symbolic")
         }
       }
     }
-    project.tasks.register("listRepos") {
-      group = "devenv"
-      description = "Lists the Git repositories of devenv and their properties."
+
+    private fun properties(file: Path): Properties {
+      val properties = Properties()
+      if(!Files.isRegularFile(file)) {
+        throw GradleException("Cannot update repositories of devenv; property file '$file' does not exist or is not a file")
+      }
+      Files.newInputStream(file).buffered().use { inputStream ->
+        properties.load(inputStream)
+      }
+      return properties
+    }
+
+    private fun toRepo(repoConfig: RepoConfig, urlPrefix: String, rootBranch: String, properties: Properties): Repo {
+      val (name, defaultUpdate, defaultUrl, defaultBranch, defaultDirPath) = repoConfig
+      val update = "true" == properties.getProperty(name) ?: defaultUpdate ?: false
+      val url = properties.getProperty("$name.url") ?: defaultUrl ?: "$urlPrefix/$name.git"
+      val branch = properties.getProperty("$name.branch") ?: defaultBranch ?: rootBranch
+      val dirName = properties.getProperty("$name.dir") ?: defaultDirPath ?: name
+      return Repo(name, update, url, branch, dirName)
+    }
+  }
+
+  private fun configure(project: Project) {
+    project.tasks.register<GitTask>("cloneRepos") {
       doLast {
-        val projectDir = project.projectDir
-        val urlPrefix = extension.repoUrlPrefix
-          ?: throw GradleException("Cannot list repositories of devenv; URL prefix has not been set")
-        val rootBranch = try {
-          gitBranch(projectDir)
-        } catch(e: GradleException) {
-          throw GradleException("Cannot list repositories of devenv; current branch cannot be retrieved", e)
+        for(repo in repos) {
+          if(!repo.update) continue
+          val dir = repo.dir(project)
+          if(dir.exists()) continue
+          println("Cloning repository ${repo.dirPath}:")
+          repo.clone(project)
         }
-        val properties = run {
-          val file = projectDir.resolve("repo.properties").toPath()
-          properties(file)
+      }
+      description = "For each Git repository of devenv for which update is set to true: clone the repository if it has not been cloned yet."
+    }
+    project.tasks.register<GitTask>("updateRepos") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          val dir = repo.dir(project)
+          if(!dir.exists()) {
+            println("Cloning repository ${repo.dirPath}:")
+            repo.clone(project)
+          } else {
+            println("Updating repository ${repo.dirPath}:")
+            repo.checkout(project)
+            repo.pull(project)
+          }
+          println()
         }
+      }
+      description = "For each Git repository of devenv for which update is set to true: check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
+    }
+    project.tasks.register<GitTask>("listRepos") {
+      doLast {
         println("Git URL prefix: $urlPrefix")
         println("Current branch: $rootBranch")
         println("Repositories:")
-        for(repoConfig in extension.repos) {
-          val repo = toRepo(repoConfig, urlPrefix, rootBranch, properties)
+        for(repo in repos) {
           println(repo)
         }
       }
+      description = "Lists the Git repositories of devenv and their properties."
     }
-  }
-
-  private fun gitBranch(dir: File): String {
-    return try {
-      FileRepositoryBuilder().readEnvironment().findGitDir(dir).setMustExist(true).build()
-    } catch(e: RepositoryNotFoundException) {
-      throw GradleException("Cannot retrieve current branch name because no git repository was found at '$dir'", e)
-    }.use { repo ->
-      // Use repository with 'use' to close repository after use, freeing up resources.
-      val headRef = repo.exactRef(Constants.HEAD)
-        ?: throw GradleException("Cannot retrieve current branch name because repository has no HEAD")
-      if(headRef.isSymbolic) {
-        Repository.shortenRefName(headRef.target.name)
-      } else {
-        throw GradleException("Cannot retrieve current branch name because repository HEAD is not symbolic")
-      }
-    }
-  }
-
-  private fun properties(file: Path): Properties {
-    val properties = Properties()
-    if(!Files.isRegularFile(file)) {
-      throw GradleException("Cannot update repositories of devenv; property file '$file' does not exist or is not a file")
-    }
-    Files.newInputStream(file).buffered().use { inputStream ->
-      properties.load(inputStream)
-    }
-    return properties
-  }
-
-  private fun toRepo(repoConfig: RepoConfig, urlPrefix: String, rootBranch: String, properties: Properties): Repo {
-    val (name, defaultUpdate, defaultUrl, defaultBranch, defaultDirPath) = repoConfig
-    val update = "true" == properties.getProperty(name) ?: defaultUpdate ?: false
-    val url = properties.getProperty("$name.url") ?: defaultUrl ?: "$urlPrefix/$name.git"
-    val branch = properties.getProperty("$name.branch") ?: defaultBranch ?: rootBranch
-    val dirName = properties.getProperty("$name.dir") ?: defaultDirPath ?: name
-    return Repo(name, update, url, branch, dirName)
-  }
-
-  private fun updateGitRepo(repo: Repo, project: Project) {
-    val (_, update, url, branch, dirPath) = repo
-    if(!update) return
-    val dir = project.projectDir.resolve(dirPath)
-    if(!dir.exists()) {
-      println("Cloning repository $dirPath:")
-      project.exec {
-        executable = "git"
-        args = mutableListOf("clone", "--quiet", "--recurse-submodules", "--branch", branch, url, dirPath)
-        println(commandLine.joinToString(separator = " "))
-      }
-    } else {
-      println("Updating repository $dirPath:")
-      project.exec {
-        executable = "git"
-        workingDir = dir
-        args = mutableListOf("checkout", "--quiet", branch)
-        println(commandLine.joinToString(separator = " "))
-      }
-      project.exec {
-        executable = "git"
-        workingDir = dir
-        args = mutableListOf("pull", "--quiet", "--recurse-submodules", "--rebase")
-        println(commandLine.joinToString(separator = " "))
-      }
-    }
-    println()
   }
 }
 
 
 data class Repo(val name: String, val update: Boolean, val url: String, val branch: String, val dirPath: String) {
+  fun dir(project: Project) = project.projectDir.resolve(dirPath)
+
+  fun clone(project: Project) {
+    project.exec {
+      executable = "git"
+      args = mutableListOf("clone", "--quiet", "--recurse-submodules", "--branch", branch, url, dirPath)
+      println(commandLine.joinToString(separator = " "))
+    }
+  }
+
+  fun checkout(project: Project) {
+    project.exec {
+      executable = "git"
+      workingDir = dir(project)
+      args = mutableListOf("checkout", "--quiet", branch)
+      println(commandLine.joinToString(separator = " "))
+    }
+  }
+
+  fun pull(project: Project) {
+    project.exec {
+      executable = "git"
+      workingDir = dir(project)
+      args = mutableListOf("pull", "--quiet", "--recurse-submodules", "--rebase")
+      println(commandLine.joinToString(separator = " "))
+    }
+  }
+
   override fun toString(): String {
     return String.format("  %1$-30s : update = %2$-5s, branch = %3$-20s, path = %4$-30s, url = %5\$s", name, update, branch, dirPath, url)
   }
