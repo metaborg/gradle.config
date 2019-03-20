@@ -416,13 +416,9 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
 
     with(jarTask)
 
-    // Configure from runtime classpath at task execution time. TODO: does this properly configure the Jar task?
-    doFirst {
-      from(runtimeClasspath.filter { it.exists() }.map {
-        @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, because `from` takes Any.
-        if(it.isDirectory) it else zipTree(it)
-      })
-    }
+    from({ // Closure inside to defer evaluation until task execution time.
+      runtimeClasspath.filter { it.exists() }.map { if(it.isDirectory) it else zipTree(it) }
+    })
   }
   tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(executableJarTask)
   // Create an artifact for the executable JAR.
