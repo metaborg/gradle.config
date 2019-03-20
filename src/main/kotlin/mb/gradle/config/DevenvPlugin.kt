@@ -90,7 +90,29 @@ class DevenvPlugin : Plugin<Project> {
   }
 
   private fun configure(project: Project) {
-    project.tasks.register<GitTask>("cloneRepos") {
+    project.tasks.register<GitTask>("repoList") {
+      doLast {
+        println("Git URL prefix: $urlPrefix")
+        println("Current branch: $rootBranch")
+        println("Repositories:")
+        for(repo in repos) {
+          println(repo)
+        }
+      }
+      description = "Lists the Git repositories of devenv and their properties."
+    }
+    project.tasks.register<GitTask>("repoStatus") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Status for repository ${repo.dirPath}:")
+          repo.status(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: show its status"
+    }
+    project.tasks.register<GitTask>("repoClone") {
       doLast {
         for(repo in repos) {
           if(!repo.update) continue
@@ -98,11 +120,34 @@ class DevenvPlugin : Plugin<Project> {
           if(dir.exists()) continue
           println("Cloning repository ${repo.dirPath}:")
           repo.clone(project)
+          println()
         }
       }
       description = "For each Git repository of devenv for which update is set to true: clone the repository if it has not been cloned yet."
     }
-    project.tasks.register<GitTask>("updateRepos") {
+    project.tasks.register<GitTask>("repoFetch") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Fetching for repository ${repo.dirPath}:")
+          repo.fetch(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: fetch from the main remote."
+    }
+    project.tasks.register<GitTask>("repoCheckout") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Checking out ${repo.branch} for repository ${repo.dirPath}:")
+          repo.checkout(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: checkout the correct branch."
+    }
+    project.tasks.register<GitTask>("repoUpdate") {
       doLast {
         for(repo in repos) {
           if(!repo.update) continue
@@ -120,16 +165,38 @@ class DevenvPlugin : Plugin<Project> {
       }
       description = "For each Git repository of devenv for which update is set to true: check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
     }
-    project.tasks.register<GitTask>("listRepos") {
+    project.tasks.register<GitTask>("repoPush") {
       doLast {
-        println("Git URL prefix: $urlPrefix")
-        println("Current branch: $rootBranch")
-        println("Repositories:")
         for(repo in repos) {
-          println(repo)
+          if(!repo.update) continue
+          println("Pushing current branch for repository ${repo.dirPath}:")
+          repo.push(project)
+          println()
         }
       }
-      description = "Lists the Git repositories of devenv and their properties."
+      description = "For each Git repository of devenv for which update is set to true: push the current local branch to the main remote."
+    }
+    project.tasks.register<GitTask>("repoPushAll") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing all branches for repository ${repo.dirPath}:")
+          repo.pushAll(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push all local branches to the main remote."
+    }
+    project.tasks.register<GitTask>("repoPushAllTags") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing all branches for repository ${repo.dirPath}:")
+          repo.pushAllTags(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push all local tags to the main remote."
     }
   }
 }
@@ -138,31 +205,72 @@ class DevenvPlugin : Plugin<Project> {
 data class Repo(val name: String, val update: Boolean, val url: String, val branch: String, val dirPath: String) {
   fun dir(project: Project) = project.projectDir.resolve(dirPath)
 
-  fun clone(project: Project) {
+
+  fun execGitCmd(project: Project, vararg args: String, printCommandLine: Boolean = true) {
+    execGitCmd(project, mutableListOf(*args), printCommandLine)
+  }
+
+  fun execGitCmd(project: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
     project.exec {
-      executable = "git"
-      args = mutableListOf("clone", "--quiet", "--recurse-submodules", "--branch", branch, url, dirPath)
-      println(commandLine.joinToString(separator = " "))
+      this.executable = "git"
+      this.workingDir = dir(project)
+      this.args = args
+
+      if(printCommandLine){
+        println(commandLine.joinToString(separator = " "))
+      }
     }
+  }
+
+
+  fun execGitCmdInRoot(project: Project, vararg args: String, printCommandLine: Boolean = true) {
+    execGitCmdInRoot(project, mutableListOf(*args), printCommandLine)
+  }
+
+  fun execGitCmdInRoot(project: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
+    project.exec {
+      this.executable = "git"
+      this.args = args
+
+      if(printCommandLine){
+        println(commandLine.joinToString(separator = " "))
+      }
+    }
+  }
+
+
+  fun status(project: Project) {
+    execGitCmd(project, "status", printCommandLine = false)
+  }
+
+  fun clone(project: Project) {
+    execGitCmdInRoot(project, "clone", "--quiet", "--recurse-submodules", "--branch", branch, url, dirPath)
+  }
+
+  fun fetch(project: Project) {
+    execGitCmd(project, "fetch", "--quiet", "--recurse-submodules")
   }
 
   fun checkout(project: Project) {
-    project.exec {
-      executable = "git"
-      workingDir = dir(project)
-      args = mutableListOf("checkout", "--quiet", branch)
-      println(commandLine.joinToString(separator = " "))
-    }
+    execGitCmd(project, "checkout", "--quiet", branch)
   }
 
   fun pull(project: Project) {
-    project.exec {
-      executable = "git"
-      workingDir = dir(project)
-      args = mutableListOf("pull", "--quiet", "--recurse-submodules", "--rebase")
-      println(commandLine.joinToString(separator = " "))
-    }
+    execGitCmd(project, "pull", "--quiet", "--recurse-submodules", "--rebase")
   }
+
+  fun push(project: Project) {
+    execGitCmd(project, "push")
+  }
+
+  fun pushAllTags(project: Project) {
+    execGitCmd(project, "push", "--tags")
+  }
+
+  fun pushAll(project: Project) {
+    execGitCmd(project, "push", "--all")
+  }
+
 
   override fun toString(): String {
     return String.format("  %1$-30s : update = %2$-5s, branch = %3$-20s, path = %4$-30s, url = %5\$s", name, update, branch, dirPath, url)
