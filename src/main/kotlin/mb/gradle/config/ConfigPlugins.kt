@@ -417,7 +417,10 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
     with(jarTask)
 
     from({ // Closure inside to defer evaluation until task execution time.
-      runtimeClasspath.filter { it.exists() }.map { if(it.isDirectory) it else zipTree(it) }
+      runtimeClasspath.filter { it.exists() }.map {
+        @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, as from takes Any's.
+        if(it.isDirectory) it else zipTree(it)
+      }
     })
   }
   tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(executableJarTask)
