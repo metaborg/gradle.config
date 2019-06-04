@@ -1,6 +1,6 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.3.1" // Bootstrap with previous version.
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.1" // Bootstrap with previous version.
+  id("org.metaborg.gradle.config.root-project") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
   id("org.metaborg.gitonium") version "0.1.2"
   kotlin("jvm") version "1.3.21"
   `kotlin-dsl`
