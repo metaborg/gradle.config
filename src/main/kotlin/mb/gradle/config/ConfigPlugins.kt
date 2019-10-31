@@ -17,6 +17,8 @@ import org.gradle.api.tasks.bundling.Jar
 import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.api.tasks.testing.Test
+import org.gradle.api.tasks.testing.logging.TestExceptionFormat
+import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.buildinit.plugins.BuildInitPlugin
 import org.gradle.buildinit.plugins.WrapperPlugin
@@ -543,6 +545,13 @@ private fun Project.configureJUnit() {
   tasks.withType<Test> {
     @Suppress("UnstableApiUsage")
     useJUnitPlatform()
+    testLogging {
+      events(TestLogEvent.FAILED)
+      showExceptions = true
+      showCauses = true
+      showStackTraces = true
+      exceptionFormat = TestExceptionFormat.FULL
+    }
   }
 }
 
