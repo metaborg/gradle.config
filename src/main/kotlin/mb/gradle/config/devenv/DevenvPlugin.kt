@@ -1,12 +1,16 @@
 package mb.gradle.config.devenv
 
+import mb.gradle.config.configureAnyProject
 import org.eclipse.jgit.lib.internal.WorkQueue
-import org.gradle.api.*
+import org.gradle.api.GradleException
+import org.gradle.api.Plugin
+import org.gradle.api.Project
 import org.gradle.kotlin.dsl.register
 
 @Suppress("unused")
 class DevenvPlugin : Plugin<Project> {
   override fun apply(project: Project) {
+    project.configureAnyProject() // Apply important bits of config plugin.
     val extension = DevenvExtension(project)
     project.extensions.add("devenv", extension)
     project.afterEvaluate {

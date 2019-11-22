@@ -3,6 +3,7 @@ package mb.gradle.config
 import org.gradle.api.JavaVersion
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.UnknownTaskException
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.BasePlugin
@@ -20,8 +21,6 @@ import org.gradle.api.tasks.testing.Test
 import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.wrapper.Wrapper
-import org.gradle.buildinit.plugins.BuildInitPlugin
-import org.gradle.buildinit.plugins.WrapperPlugin
 import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
@@ -118,7 +117,8 @@ open class MetaborgExtension(private val project: Project) {
   }
 
 
-  var gradleWrapperVersion = "5.2.1"
+  var gradleWrapperVersion = "5.6.4"
+  var gradleWrapperDistribution = Wrapper.DistributionType.BIN
   var javaVersion = JavaVersion.VERSION_1_8
   var javaCreatePublication = true
   var javaCreateSourcesJar = true
@@ -127,7 +127,7 @@ open class MetaborgExtension(private val project: Project) {
   var javaPublishJavadocJar = false
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
-  var junitVersion = "5.4.0"
+  var junitVersion = "5.5.2"
 
 
   fun configureSubProject() {
@@ -175,23 +175,16 @@ open class MetaborgExtension(private val project: Project) {
 //
 
 fun Project.configureRootProject() {
-  configureVersion()
   configureAnyProject()
   createCompositeBuildTasks()
-  // Configure afterEvaluate, because it uses a property from an extension.
-  afterEvaluate {
-    configureWrapper()
-  }
 }
 
 fun Project.configureSubProject() {
   configureAnyProject()
-  // Only root project needs version configuration, as the gitonium plugin handles sub-projects.
   // Only root project needs composite build tasks, as these tasks depend on tasks for sub-projects.
-  // Only root project needs wrapper configuration.
 }
 
-private fun Project.configureAnyProject() {
+fun Project.configureAnyProject() {
   configureGroup()
   configureRepositories()
   configurePublishingRepositories()
@@ -203,6 +196,10 @@ private fun Project.configureAnyProject() {
       extensions.add(MetaborgExtension.name, MetaborgExtension(this))
     }
   }
+  // Configure afterEvaluate, because it uses a property from an extension.
+  afterEvaluate {
+    configureWrapper()
+  }
 }
 
 //
@@ -211,10 +208,6 @@ private fun Project.configureAnyProject() {
 
 private fun Project.configureGroup() {
   group = "org.metaborg"
-}
-
-private fun Project.configureVersion() {
-  pluginManager.apply("org.metaborg.gitonium")
 }
 
 private fun Project.configureRepositories() {
@@ -281,12 +274,19 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
 
 private fun Project.configureWrapper() {
   val extension = extensions.getByType<MetaborgExtension>()
-  pluginManager.apply("wrapper")
-  tasks {
-    named<Wrapper>("wrapper") {
-      gradleVersion = extension.gradleWrapperVersion
-      distributionType = Wrapper.DistributionType.ALL
-      setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
+  fun Wrapper.configureWrapperTask() {
+    gradleVersion = extension.gradleWrapperVersion
+    distributionType = extension.gradleWrapperDistribution
+    setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
+  }
+  try {
+    tasks.named<Wrapper>("wrapper") {
+      configureWrapperTask()
+    }
+  } catch(e: UnknownTaskException) {
+    // Create wrapper task if it does not exist (which seems to be the case for sub projects of root projects)
+    tasks.register("wrapper", Wrapper::class.java) {
+      configureWrapperTask()
     }
   }
 }
@@ -418,7 +418,8 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
 
     with(jarTask)
 
-    from({ // Closure inside to defer evaluation until task execution time.
+    from({
+      // Closure inside to defer evaluation until task execution time.
       runtimeClasspath.filter { it.exists() }.map {
         @Suppress("IMPLICIT_CAST_TO_ANY") // Implicit cast to Any is fine, as from takes Any's.
         if(it.isDirectory) it else zipTree(it)
