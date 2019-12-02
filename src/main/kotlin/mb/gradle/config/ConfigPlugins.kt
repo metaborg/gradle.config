@@ -481,12 +481,13 @@ private fun Project.configureKotlinStdlib(configuration: Configuration) {
 
 fun Project.configureKotlinLibrary() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
+  // Configure stdlib eagerly: Kotlin plugin will modify the version to its applied plugin version in afterEvaluate.
+  configureKotlinStdlib(configurations.getByName("implementation"))
   // Configure afterEvaluate, because...
   afterEvaluate {
     // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
-    configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaPublication("KotlinLibrary")
   }
 }
@@ -494,37 +495,38 @@ fun Project.configureKotlinLibrary() {
 fun Project.configureKotlinApplication() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   pluginManager.apply("application")
+  // Configure stdlib eagerly: Kotlin plugin will modify the version to its applied plugin version in afterEvaluate.
+  configureKotlinStdlib(configurations.getByName("implementation"))
   // Configure afterEvaluate, because...
   afterEvaluate {
     // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
-    configureKotlinStdlib(configurations.getByName("implementation"))
     configureJavaExecutableJar("KotlinApplication")
   }
 }
 
 fun Project.configureKotlinTestingOnly() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
+  // Configure stdlib eagerly: Kotlin plugin will modify the version to its applied plugin version in afterEvaluate.
+  configureKotlinStdlib(configurations.getByName("testImplementation"))
   // Configure afterEvaluate, because...
   afterEvaluate {
     // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
-    configureKotlinStdlib(configurations.getByName("testImplementation"))
   }
 }
 
 fun Project.configureKotlinGradlePlugin() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
-  pluginManager.apply("org.gradle.kotlin.kotlin-dsl")
+  pluginManager.apply("org.gradle.kotlin.kotlin-dsl") // Do not configure Kotlin stdlib, since the 'kotlin-dsl' plugin already does this.
   configureGradlePlugin()
   // Configure afterEvaluate, because...
   afterEvaluate {
     // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
-    // Do not configure Kotlin stdlib, since the 'kotlin-dsl' plugin already does this.
     val extension = extensions.getByType<MetaborgExtension>()
     extensions.configure<KotlinDslPluginOptions> {
       experimentalWarning.set(false)
