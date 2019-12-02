@@ -187,7 +187,6 @@ fun Project.configureSubProject() {
 fun Project.configureAnyProject() {
   configureGroup()
   configureRepositories()
-  configurePublishingRepositories()
   if(extensions.findByName(MetaborgExtension.name) == null) {
     extensions.add(MetaborgExtension.name, MetaborgExtension(this))
   }
@@ -196,9 +195,10 @@ fun Project.configureAnyProject() {
       extensions.add(MetaborgExtension.name, MetaborgExtension(this))
     }
   }
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
-    configureWrapper()
+    configureWrapper() // it uses a property from the metaborg extension, which may be modified by the user.
+    configurePublishingRepositories() // it uses the version, which the Gitonium plugin may set later.
   }
 }
 
@@ -394,8 +394,9 @@ private fun Project.configureJavaPublication(name: String, additionalConfigurati
 
 fun Project.configureJavaLibrary() {
   pluginManager.apply("java-library")
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureJavaSourcesJar()
     configureJavadocJar()
@@ -440,8 +441,9 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
 
 fun Project.configureJavaApplication() {
   pluginManager.apply("application")
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureJavaSourcesJar()
     configureJavadocJar()
@@ -479,8 +481,9 @@ private fun Project.configureKotlinStdlib(configuration: Configuration) {
 
 fun Project.configureKotlinLibrary() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("implementation"))
@@ -491,8 +494,9 @@ fun Project.configureKotlinLibrary() {
 fun Project.configureKotlinApplication() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   pluginManager.apply("application")
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("implementation"))
@@ -502,8 +506,9 @@ fun Project.configureKotlinApplication() {
 
 fun Project.configureKotlinTestingOnly() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
     configureKotlinStdlib(configurations.getByName("testImplementation"))
@@ -514,8 +519,9 @@ fun Project.configureKotlinGradlePlugin() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   pluginManager.apply("org.gradle.kotlin.kotlin-dsl")
   configureGradlePlugin()
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJavaCompiler()
     configureKotlinCompiler()
     // Do not configure Kotlin stdlib, since the 'kotlin-dsl' plugin already does this.
@@ -557,8 +563,9 @@ private fun Project.configureJUnit() {
 }
 
 fun Project.configureJunitTesting() {
-  // Configure afterEvaluate, because it uses a property from an extension.
+  // Configure afterEvaluate, because...
   afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
     configureJUnit()
   }
 }
