@@ -14,9 +14,9 @@ class DevenvSettingsPlugin : Plugin<Settings> {
 
 @Suppress("unused")
 open class DevenvSettingsExtension(private val settings: Settings) {
-  val repoProperties = repoProperties(properties(settings.rootDir))
+  val repoProperties = toRepoConfigMap(repoProperties(settings.rootDir))
 
-  fun includeBuildsFromSubDirs(onlyIncludeBuildsFromIncludedRepos: Boolean) {
+  fun includeBuildsFromSubDirs(onlyIncludeBuildsFromIncludedRepos: Boolean = true) {
     val rootDir = settings.rootDir
 
     val includedRepoDirPaths = if(onlyIncludeBuildsFromIncludedRepos) {

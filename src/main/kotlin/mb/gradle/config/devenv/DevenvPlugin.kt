@@ -21,8 +21,8 @@ class DevenvPlugin : Plugin<Project> {
   private fun configure(project: Project, extension: DevenvExtension) {
     val urlPrefix = extension.repoUrlPrefix
       ?: throw GradleException("Cannot create repositories of devenv; repository URL prefix (repoUrlPrefix) was not set in 'devenv' extension")
-    val properties = properties(project.rootDir)
-    val repoProperties = repoProperties(properties)
+    val properties = repoProperties(project.rootDir)
+    val repoProperties = toRepoConfigMap(properties)
     val rootBranch = branch(project.rootDir)
     val repos = createRepos(extension.repoConfigs, repoProperties, urlPrefix, rootBranch)
 

@@ -101,7 +101,7 @@ data class RepoConfig(
   var branch: String? = null
 )
 
-fun properties(rootDir: File): Properties {
+fun repoProperties(rootDir: File): Properties {
   val propertiesFile = rootDir.resolve("repo.properties")
   if(!propertiesFile.isFile) {
     throw GradleException("Cannot create repositories of devenv; property file '$propertiesFile' does not exist or is not a file")
@@ -113,7 +113,7 @@ fun properties(rootDir: File): Properties {
   return properties
 }
 
-fun repoProperties(properties: Properties): Map<String, RepoConfig> {
+fun toRepoConfigMap(properties: Properties): Map<String, RepoConfig> {
   val map = HashMap<String, RepoConfig>()
   for((k, v) in properties.entries) {
     k as String
