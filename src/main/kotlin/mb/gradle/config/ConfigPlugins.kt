@@ -176,7 +176,10 @@ open class MetaborgExtension(private val project: Project) {
 
 fun Project.configureRootProject() {
   configureAnyProject()
-  createCompositeBuildTasks()
+  gradle.projectsEvaluated {
+    // Create composite build tasks after all projects have been evaluated, to ensure that all tasks in all projects have been registered.
+    createCompositeBuildTasks()
+  }
 }
 
 fun Project.configureSubProject() {
@@ -255,20 +258,30 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
     this.group = "composite build"
     this.description = description
     if(project.subprojects.isEmpty()) {
+      // Root project without sub-projects: just depend on task in the current project.
       val task = project.tasks.findByName(name)
       if(task != null) {
         this.dependsOn(task)
       } else {
-        project.logger.warn("Composite build task '$allName' does not include project '$project' because it does not have a task named '$name'")
+        project.logger.warn("Composite build task '$allName' does not delegate to $project because it does not have a task named '$name'")
       }
     } else {
+      // Root project with sub-projects: depend on tasks of sub-projects.
       this.dependsOn(project.subprojects.mapNotNull {
         it.tasks.findByName(name) ?: run {
-          project.logger.warn("Composite build task '$allName' does not include project '$it' because it does not have a task named '$name'")
+          project.logger.warn("Composite build task '$allName' does not delegate to $it because it does not have a task named '$name'")
           null
         }
       })
     }
+    // Root project with included composite builds: depend on composite build tasks of those composite builds.
+    this.dependsOn(project.gradle.includedBuilds.mapNotNull {
+      try {
+        it.task(":$allName")
+      } catch(e: Throwable) {
+        project.logger.warn("Composite build task '$allName' does not include $it because it does not have a task named '$allName'")
+      }
+    })
   }
 }
 

@@ -1,6 +1,5 @@
 package mb.gradle.config.devenv
 
-import mb.gradle.config.configureAnyProject
 import org.eclipse.jgit.lib.internal.WorkQueue
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -10,7 +9,6 @@ import org.gradle.kotlin.dsl.register
 @Suppress("unused")
 class DevenvPlugin : Plugin<Project> {
   override fun apply(project: Project) {
-    project.configureAnyProject() // Apply important bits of config plugin.
     val extension = DevenvExtension(project)
     project.extensions.add("devenv", extension)
     project.afterEvaluate {
@@ -150,12 +148,4 @@ open class DevenvExtension(private val project: Project) {
   }
 
   internal val repoConfigs = HashMap<String, RepoConfig>()
-
-  fun registerCompositeBuildTask(name: String, description: String) {
-    project.tasks.register(name) {
-      this.group = "composite build"
-      this.description = description
-      this.dependsOn(project.gradle.includedBuilds.map { it.task(":$name") })
-    }
-  }
 }
