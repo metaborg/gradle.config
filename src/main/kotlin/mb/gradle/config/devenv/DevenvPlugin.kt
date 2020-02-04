@@ -1,6 +1,5 @@
 package mb.gradle.config.devenv
 
-import mb.gradle.config.configureAnyProject
 import org.eclipse.jgit.lib.internal.WorkQueue
 import org.gradle.api.GradleException
 import org.gradle.api.Plugin
@@ -10,7 +9,6 @@ import org.gradle.kotlin.dsl.register
 @Suppress("unused")
 class DevenvPlugin : Plugin<Project> {
   override fun apply(project: Project) {
-    project.configureAnyProject() // Apply important bits of config plugin.
     val extension = DevenvExtension(project)
     project.extensions.add("devenv", extension)
     project.afterEvaluate {
@@ -21,8 +19,8 @@ class DevenvPlugin : Plugin<Project> {
   private fun configure(project: Project, extension: DevenvExtension) {
     val urlPrefix = extension.repoUrlPrefix
       ?: throw GradleException("Cannot create repositories of devenv; repository URL prefix (repoUrlPrefix) was not set in 'devenv' extension")
-    val properties = properties(project.rootDir)
-    val repoProperties = repoProperties(properties)
+    val properties = repoProperties(project.rootDir)
+    val repoProperties = toRepoConfigMap(properties)
     val rootBranch = branch(project.rootDir)
     val repos = createRepos(extension.repoConfigs, repoProperties, urlPrefix, rootBranch)
 
@@ -150,12 +148,4 @@ open class DevenvExtension(private val project: Project) {
   }
 
   internal val repoConfigs = HashMap<String, RepoConfig>()
-
-  fun registerCompositeBuildTask(name: String, description: String) {
-    project.tasks.register(name) {
-      this.group = "composite build"
-      this.description = description
-      this.dependsOn(project.gradle.includedBuilds.map { it.task(":$name") })
-    }
-  }
 }
