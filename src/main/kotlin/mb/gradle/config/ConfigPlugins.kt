@@ -22,7 +22,7 @@ import org.gradle.api.tasks.testing.logging.TestExceptionFormat
 import org.gradle.api.tasks.testing.logging.TestLogEvent
 import org.gradle.api.tasks.wrapper.Wrapper
 import org.gradle.kotlin.dsl.*
-import org.gradle.kotlin.dsl.plugins.dsl.KotlinDslPluginOptions
+import org.gradle.kotlin.dsl.plugins.dsl.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 import java.net.URI
 
@@ -423,14 +423,9 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
     val runtimeClasspath by configurations
     dependsOn(runtimeClasspath)
 
-    manifest {
-      @Suppress("UnstableApiUsage")
-      attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
-    }
     archiveClassifier.set("executable")
 
     with(jarTask)
-
     from({
       // Closure inside to defer evaluation until task execution time.
       runtimeClasspath.filter { it.exists() }.map {
@@ -438,8 +433,15 @@ private fun Project.configureJavaExecutableJar(publicationName: String) {
         if(it.isDirectory) it else zipTree(it)
       }
     })
+
+    doFirst { // Delay setting Main-Class attribute to just before execution, to ensure that mainClassName is set.
+      manifest {
+        @Suppress("UnstableApiUsage")
+        attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
+      }
+    }
   }
-  tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME).dependsOn(executableJarTask)
+  tasks.named(BasePlugin.ASSEMBLE_TASK_NAME).configure { dependsOn(executableJarTask) }
   // Create an artifact for the executable JAR.
   val executableJarArtifact = artifacts.add(Dependency.DEFAULT_CONFIGURATION, executableJarTask) {
     classifier = "executable"
