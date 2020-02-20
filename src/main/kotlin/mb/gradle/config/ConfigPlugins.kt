@@ -127,7 +127,7 @@ open class MetaborgExtension(private val project: Project) {
   var javaPublishJavadocJar = false
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
-  var junitVersion = "5.5.2"
+  var junitVersion = "5.6.0"
 
 
   fun configureSubProject() {
@@ -560,10 +560,12 @@ private fun Project.configureJUnit() {
   val extension = extensions.getByType<MetaborgExtension>()
   val junitVersion = extension.junitVersion
   val testImplementation by configurations
-  val testRuntimeOnly by configurations
   dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    // NOTE: This is an aggregate dependency that includes:
+    //   testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    //   testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
+    //   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
   }
   tasks.withType<Test> {
     @Suppress("UnstableApiUsage")
