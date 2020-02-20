@@ -560,10 +560,12 @@ private fun Project.configureJUnit() {
   val extension = extensions.getByType<MetaborgExtension>()
   val junitVersion = extension.junitVersion
   val testImplementation by configurations
-  val testRuntimeOnly by configurations
   dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    // NOTE: This is an aggregate dependency that includes:
+    //   testImplementation("org.junit.jupiter:junit-jupiter-api:$junitVersion")
+    //   testImplementation("org.junit.jupiter:junit-jupiter-params:$junitVersion")
+    //   testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitVersion")
+    testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
   }
   tasks.withType<Test> {
     @Suppress("UnstableApiUsage")
