@@ -127,7 +127,7 @@ open class MetaborgExtension(private val project: Project) {
   var javaPublishJavadocJar = false
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
-  var junitVersion = "5.5.2"
+  var junitVersion = "5.6.0"
 
 
   fun configureSubProject() {
