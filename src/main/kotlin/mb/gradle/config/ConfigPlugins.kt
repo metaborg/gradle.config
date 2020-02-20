@@ -128,7 +128,6 @@ open class MetaborgExtension(private val project: Project) {
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
   var junitVersion = "5.6.0"
-  var equalsverifierVersion = "3.1.12"
 
 
   fun configureSubProject() {
@@ -560,11 +559,9 @@ fun Project.configureKotlinGradlePlugin() {
 private fun Project.configureJUnit() {
   val extension = extensions.getByType<MetaborgExtension>()
   val junitVersion = extension.junitVersion
-  val equalsverifierVersion = extension.equalsverifierVersion
   val testImplementation by configurations
   dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
-    testImplementation("nl.jqno.equalsverifier:equalsverifier:$equalsverifierVersion")
   }
   tasks.withType<Test> {
     @Suppress("UnstableApiUsage")
