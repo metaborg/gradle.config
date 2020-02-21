@@ -72,7 +72,7 @@ class Repo(
   }
 
   fun pull(rootProject: Project) {
-    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase")
+    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
   }
 
   fun push(rootProject: Project) {
