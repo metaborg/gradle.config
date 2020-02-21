@@ -72,19 +72,23 @@ class Repo(
   }
 
   fun pull(rootProject: Project) {
-    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase")
+    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
   }
 
   fun push(rootProject: Project) {
     execGitCmd(rootProject, "push")
   }
 
-  fun pushAllTags(rootProject: Project) {
-    execGitCmd(rootProject, "push", "--tags")
+  fun pushTags(rootProject: Project) {
+    execGitCmd(rootProject, "push", "--follow-tags")
   }
 
   fun pushAll(rootProject: Project) {
     execGitCmd(rootProject, "push", "--all")
+  }
+
+  fun pushAllTags(rootProject: Project) {
+    execGitCmd(rootProject, "push", "--all", "--follow-tags")
   }
 
 

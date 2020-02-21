@@ -31,7 +31,7 @@ For projects that use JUnit:
 For projects in the project hierarchy:
 
 - `org.metaborg.gradle.config.devenv`  
-  For the root `/build.gradle.kts`
+  For the root `/build.gradle.kts`, provides Git version control commands
 - `org.metaborg.gradle.config.devenv-settings`  
   For the root `/settings.gradle.kts`
 - `org.metaborg.gradle.config.root-project`  
@@ -45,8 +45,8 @@ Include the required plugins in the `build.gradle.kts` file's `plugins` block,
 like this:
 
     plugins {
-    id("org.metaborg.gradle.config.java-library")
-    id("org.metaborg.gradle.config.junit-testing")
+      id("org.metaborg.gradle.config.java-library")
+      id("org.metaborg.gradle.config.junit-testing")
     }
 
 
@@ -66,3 +66,18 @@ First, ensure your changes work correctly by [enabling the plugin](#development)
 and building the project. Then push the changes to the `develop` branch.
 Once the online build succeeds, merge the develop branch with `master`
 and tag the commit to make a release. The tag format is: `release-1.2.3`.
+
+
+## Git Version Control Tasks
+The `org.metaborg.gradle.config.devenv` plugin, applied to the root of
+this project, provides tasks for Git version control. The most important
+tasks are:
+
+- `repoStatus` — Provides the status of the repository.
+- `repoUpdate` — Updates the repositories.
+- `repoPush` — Pushes the current branch of the repository.
+
+To list all tasks, issue:
+
+    ./gradlew tasks
+

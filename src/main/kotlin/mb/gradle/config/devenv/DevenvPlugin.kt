@@ -108,6 +108,17 @@ class DevenvPlugin : Plugin<Project> {
       }
       description = "For each Git repository of devenv for which update is set to true: push the current local branch to the main remote."
     }
+    project.tasks.register<DevenvTask>("repoPushTags") {
+      doLast {
+        for(repo in repos) {
+          if(!repo.update) continue
+          println("Pushing current branch and annotated tags for repository ${repo.dirPath}:")
+          repo.pushTags(project)
+          println()
+        }
+      }
+      description = "For each Git repository of devenv for which update is set to true: push the current local branch and annotated tags to the main remote."
+    }
     project.tasks.register<DevenvTask>("repoPushAll") {
       doLast {
         for(repo in repos) {
@@ -123,12 +134,12 @@ class DevenvPlugin : Plugin<Project> {
       doLast {
         for(repo in repos) {
           if(!repo.update) continue
-          println("Pushing all branches for repository ${repo.dirPath}:")
+          println("Pushing all branches and annotated tags for repository ${repo.dirPath}:")
           repo.pushAllTags(project)
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: push all local tags to the main remote."
+      description = "For each Git repository of devenv for which update is set to true: push all local branches and annotated tags to the main remote."
     }
 
     // Shutdown JGit work queue after build is finished to free resources.
