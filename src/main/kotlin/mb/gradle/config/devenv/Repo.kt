@@ -79,7 +79,7 @@ class Repo(
     execGitCmd(rootProject, "push")
   }
 
-  fun pushAllTags(rootProject: Project) {
+  fun pushTags(rootProject: Project) {
     execGitCmd(rootProject, "push", "--follow-tags")
   }
 
