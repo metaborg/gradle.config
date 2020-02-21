@@ -50,34 +50,8 @@ like this:
     }
 
 
-## Development
-To develop this plugin, first enable it in the root Gradle build.
-In `/repo.properties`, ensure the following line is set to `true`:
-
-    gradle.config=true
-
-This will enable the project, ensuring that the developed version
-is used instead of the released version whenever you build. It also
-allows your IDE to recognize the project and its sources.
-
-
 ## Deployment
-First, ensure your changes work correctly by [enabling the plugin](#development)
-and building the project. Then push the changes to the `develop` branch.
+First, ensure your changes work correctly by building the project.
+Then push the changes to the `develop` branch.
 Once the online build succeeds, merge the develop branch with `master`
 and tag the commit to make a release. The tag format is: `release-1.2.3`.
-
-
-## Git Version Control Tasks
-The `org.metaborg.gradle.config.devenv` plugin, applied to the root of
-this project, provides tasks for Git version control. The most important
-tasks are:
-
-- `repoStatus` — Provides the status of the repository.
-- `repoUpdate` — Updates the repositories.
-- `repoPush` — Pushes the current branch of the repository.
-
-To list all tasks, issue:
-
-    ./gradlew tasks
-
