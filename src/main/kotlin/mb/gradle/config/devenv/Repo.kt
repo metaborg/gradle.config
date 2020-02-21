@@ -87,6 +87,10 @@ class Repo(
     execGitCmd(rootProject, "push", "--all")
   }
 
+  fun pushAllTags(rootProject: Project) {
+    execGitCmd(rootProject, "push", "--all", "--follow-tags")
+  }
+
 
   override fun toString(): String {
     return String.format("  %1$-30s : include = %2$-5s, update = %3$-5s, branch = %4$-20s, path = %5$-30s, url = %6\$s", name, include, update, branch, dirPath, url)
