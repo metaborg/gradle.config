@@ -27,11 +27,14 @@ class Repo(
   }
 
   fun execGitCmd(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
+    val dir = dir(rootProject.projectDir)
+    if(!dir.exists()) {
+      error("Cannot execute git command in directory $dir, directory does not exist")
+    }
     rootProject.exec {
       this.executable = "git"
-      this.workingDir = dir(rootProject.projectDir)
+      this.workingDir = dir
       this.args = args
-
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -47,7 +50,6 @@ class Repo(
     rootProject.exec {
       this.executable = "git"
       this.args = args
-
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
