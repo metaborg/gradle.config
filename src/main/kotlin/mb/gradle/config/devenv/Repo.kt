@@ -27,11 +27,14 @@ class Repo(
   }
 
   fun execGitCmd(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
+    val dir = dir(rootProject.projectDir)
+    if(!dir.exists()) {
+      error("Cannot execute git command in directory $dir, directory does not exist")
+    }
     rootProject.exec {
       this.executable = "git"
-      this.workingDir = dir(rootProject.projectDir)
+      this.workingDir = dir
       this.args = args
-
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -47,7 +50,6 @@ class Repo(
     rootProject.exec {
       this.executable = "git"
       this.args = args
-
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -72,19 +74,23 @@ class Repo(
   }
 
   fun pull(rootProject: Project) {
-    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase")
+    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
   }
 
   fun push(rootProject: Project) {
     execGitCmd(rootProject, "push")
   }
 
-  fun pushAllTags(rootProject: Project) {
-    execGitCmd(rootProject, "push", "--tags")
+  fun pushTags(rootProject: Project) {
+    execGitCmd(rootProject, "push", "--follow-tags")
   }
 
   fun pushAll(rootProject: Project) {
     execGitCmd(rootProject, "push", "--all")
+  }
+
+  fun pushAllTags(rootProject: Project) {
+    execGitCmd(rootProject, "push", "--all", "--follow-tags")
   }
 
 

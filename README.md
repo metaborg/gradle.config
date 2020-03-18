@@ -31,7 +31,7 @@ For projects that use JUnit:
 For projects in the project hierarchy:
 
 - `org.metaborg.gradle.config.devenv`  
-  For the root `/build.gradle.kts`
+  For the root `/build.gradle.kts`, provides Git version control commands
 - `org.metaborg.gradle.config.devenv-settings`  
   For the root `/settings.gradle.kts`
 - `org.metaborg.gradle.config.root-project`  
@@ -45,24 +45,13 @@ Include the required plugins in the `build.gradle.kts` file's `plugins` block,
 like this:
 
     plugins {
-    id("org.metaborg.gradle.config.java-library")
-    id("org.metaborg.gradle.config.junit-testing")
+      id("org.metaborg.gradle.config.java-library")
+      id("org.metaborg.gradle.config.junit-testing")
     }
 
 
-## Development
-To develop this plugin, first enable it in the root Gradle build.
-In `/repo.properties`, ensure the following line is set to `true`:
-
-    gradle.config=true
-
-This will enable the project, ensuring that the developed version
-is used instead of the released version whenever you build. It also
-allows your IDE to recognize the project and its sources.
-
-
 ## Deployment
-First, ensure your changes work correctly by [enabling the plugin](#development)
-and building the project. Then push the changes to the `develop` branch.
+First, ensure your changes work correctly by building the project.
+Then push the changes to the `develop` branch.
 Once the online build succeeds, merge the develop branch with `master`
 and tag the commit to make a release. The tag format is: `release-1.2.3`.
