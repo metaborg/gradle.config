@@ -214,11 +214,8 @@ private fun Project.configureGroup() {
 }
 
 private fun Project.configureRepositories() {
-  val repoPrefix = "https://artifacts.metaborg.org/content/repositories"
   repositories {
-    maven(url = "$repoPrefix/releases/")
-    maven(url = "$repoPrefix/snapshots/")
-    maven(url = "$repoPrefix/central/")
+    maven(url = "https://artifacts.metaborg.org/content/groups/public/")
     mavenCentral() // Backup
   }
 }
