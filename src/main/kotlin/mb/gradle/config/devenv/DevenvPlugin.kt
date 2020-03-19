@@ -155,7 +155,7 @@ open class DevenvExtension(private val project: Project) {
 
   @JvmOverloads
   fun registerRepo(name: String, defaultInclude: Boolean? = null, defaultUpdate: Boolean? = null, defaultUrl: String? = null, defaultBranch: String? = null, defaultDirPath: String? = null) {
-    repoConfigs[name] = RepoConfig(defaultInclude, defaultUpdate, defaultUrl, defaultBranch, defaultDirPath)
+    repoConfigs[name] = RepoConfig(defaultInclude, defaultUpdate, defaultDirPath, defaultUrl, defaultBranch)
   }
 
   internal val repoConfigs = HashMap<String, RepoConfig>()
