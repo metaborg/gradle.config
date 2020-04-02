@@ -127,7 +127,7 @@ open class MetaborgExtension(private val project: Project) {
   var javaPublishJavadocJar = false
   var kotlinApiVersion = "1.0"
   var kotlinLanguageVersion = "1.0"
-  var junitVersion = "5.6.0"
+  var junitVersion = "5.6.1"
 
 
   fun configureSubProject() {
@@ -564,11 +564,20 @@ private fun Project.configureJUnit() {
     @Suppress("UnstableApiUsage")
     useJUnitPlatform()
     testLogging {
-      events(TestLogEvent.FAILED)
-      showExceptions = true
-      showCauses = true
-      showStackTraces = true
-      exceptionFormat = TestExceptionFormat.FULL
+      lifecycle {
+        events(TestLogEvent.FAILED)
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = TestExceptionFormat.FULL
+      }
+      info {
+        events(TestLogEvent.FAILED, TestLogEvent.SKIPPED, TestLogEvent.STANDARD_OUT, TestLogEvent.STANDARD_ERROR)
+        showExceptions = true
+        showCauses = true
+        showStackTraces = true
+        exceptionFormat = TestExceptionFormat.FULL
+      }
     }
   }
 }
