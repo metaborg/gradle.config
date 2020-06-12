@@ -1,7 +1,7 @@
 plugins {
   id("org.metaborg.gradle.config.root-project") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
   id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
-  id("org.metaborg.gitonium") version "0.1.2"
+  id("org.metaborg.gitonium") version "0.1.3"
   kotlin("jvm") version "1.3.41" // Stick with 1.3.41: Gradle 5.6.4's kotlin-dsl plugin uses it.
   `kotlin-dsl`
   `maven-publish`
