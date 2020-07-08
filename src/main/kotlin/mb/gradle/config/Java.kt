@@ -15,6 +15,35 @@ import org.gradle.api.tasks.compile.JavaCompile
 import org.gradle.api.tasks.javadoc.Javadoc
 import org.gradle.kotlin.dsl.*
 
+fun Project.configureJavaLibrary() {
+  pluginManager.apply("java-library")
+  // Configure afterEvaluate, because...
+  afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
+    configureJavaCompiler()
+    configureJavaSourcesJar()
+    configureJavadocJar()
+    configureJavaPublication("JavaLibrary")
+  }
+}
+
+fun Project.configureJavaApplication() {
+  pluginManager.apply("application")
+  // Configure afterEvaluate, because...
+  afterEvaluate {
+    // these use a property from the metaborg extension, which may be modified by the user.
+    configureJavaCompiler()
+    configureJavaSourcesJar()
+    configureJavadocJar()
+    configureJavaExecutableJar("JavaApplication")
+  }
+}
+
+fun Project.configureJavaGradlePlugin() {
+  configureGradlePlugin()
+}
+
+
 internal fun Project.configureJavaCompiler() {
   val extension = extensions.getByType<MetaborgExtension>()
   @Suppress("UnstableApiUsage")
@@ -112,18 +141,6 @@ internal fun Project.configureJavaPublication(name: String, additionalConfigurat
   }
 }
 
-fun Project.configureJavaLibrary() {
-  pluginManager.apply("java-library")
-  // Configure afterEvaluate, because...
-  afterEvaluate {
-    // these use a property from the metaborg extension, which may be modified by the user.
-    configureJavaCompiler()
-    configureJavaSourcesJar()
-    configureJavadocJar()
-    configureJavaPublication("JavaLibrary")
-  }
-}
-
 internal fun Project.configureJavaExecutableJar(publicationName: String) {
   // Create additional JAR task that creates an executable JAR.
   val jarTask = tasks.getByName<Jar>(JavaPlugin.JAR_TASK_NAME)
@@ -159,20 +176,4 @@ internal fun Project.configureJavaExecutableJar(publicationName: String) {
     artifact(executableJarArtifact)
     artifact(tasks.getByName("distZip"))
   }
-}
-
-fun Project.configureJavaApplication() {
-  pluginManager.apply("application")
-  // Configure afterEvaluate, because...
-  afterEvaluate {
-    // these use a property from the metaborg extension, which may be modified by the user.
-    configureJavaCompiler()
-    configureJavaSourcesJar()
-    configureJavadocJar()
-    configureJavaExecutableJar("JavaApplication")
-  }
-}
-
-fun Project.configureJavaGradlePlugin() {
-  configureGradlePlugin()
 }

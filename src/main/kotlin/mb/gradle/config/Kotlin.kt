@@ -7,26 +7,6 @@ import org.gradle.kotlin.dsl.*
 import org.gradle.kotlin.dsl.plugins.dsl.*
 import org.jetbrains.kotlin.gradle.tasks.KotlinCompile
 
-internal fun Project.configureKotlinCompiler() {
-  val extension = extensions.getByType<MetaborgExtension>()
-  tasks.withType<KotlinCompile>().all {
-    kotlinOptions.apiVersion = extension.kotlinApiVersion
-    kotlinOptions.languageVersion = extension.kotlinLanguageVersion
-    kotlinOptions.jvmTarget = when(extension.javaVersion) {
-      JavaVersion.VERSION_1_6 -> "1.6"
-      else -> "1.8"
-    }
-    kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=compatibility")
-  }
-}
-
-internal fun Project.configureKotlinStdlib(configuration: Configuration) {
-  dependencies {
-    configuration(kotlin("stdlib"))
-    configuration(kotlin("stdlib-jdk8"))
-  }
-}
-
 fun Project.configureKotlinLibrary() {
   pluginManager.apply("org.jetbrains.kotlin.jvm")
   // Configure stdlib eagerly: Kotlin plugin will modify the version to its applied plugin version in afterEvaluate.
@@ -83,5 +63,26 @@ fun Project.configureKotlinGradlePlugin() {
         else -> "1.8"
       })
     }
+  }
+}
+
+
+private fun Project.configureKotlinCompiler() {
+  val extension = extensions.getByType<MetaborgExtension>()
+  tasks.withType<KotlinCompile>().all {
+    kotlinOptions.apiVersion = extension.kotlinApiVersion
+    kotlinOptions.languageVersion = extension.kotlinLanguageVersion
+    kotlinOptions.jvmTarget = when(extension.javaVersion) {
+      JavaVersion.VERSION_1_6 -> "1.6"
+      else -> "1.8"
+    }
+    kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=compatibility")
+  }
+}
+
+private fun Project.configureKotlinStdlib(configuration: Configuration) {
+  dependencies {
+    configuration(kotlin("stdlib"))
+    configuration(kotlin("stdlib-jdk8"))
   }
 }
