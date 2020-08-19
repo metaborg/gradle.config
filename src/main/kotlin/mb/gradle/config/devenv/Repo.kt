@@ -145,6 +145,9 @@ fun toRepoConfigMap(properties: Properties): Map<String, RepoConfig> {
         val config = map.getOrPut(name) { RepoConfig() }
         config.branch = v
       }
+      k.endsWith(".jenkinsjob") -> {
+        // Ignore
+      }
       else -> {
         val name = k
         val config = map.getOrPut(name) { RepoConfig() }
