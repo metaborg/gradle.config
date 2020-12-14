@@ -23,6 +23,11 @@ data class RepositoryConfigurations(
     return config.include && rootDirectory.resolve(config.directory).exists()
   }
 
+  fun isUpdated(name: String): Boolean {
+    val config = configurations[name] ?: return false
+    return config.update && rootDirectory.resolve(config.directory).exists()
+  }
+
 
   companion object {
     fun fromRootDirectory(rootDirectory: File): RepositoryConfigurations {
@@ -45,11 +50,11 @@ data class RepositoryConfigurations(
         val name: String,
         var include: Boolean? = null,
         var update: Boolean? = null,
-        var dirPath: String? = null,
+        var directory: String? = null,
         var url: String? = null,
         var branch: String? = null
       ) {
-        fun toImmutable() = RepositoryConfiguration(name, include ?: false, update ?: include ?: false, dirPath
+        fun toImmutable() = RepositoryConfiguration(name, include ?: false, update ?: include ?: false, directory
           ?: name, url, branch)
       }
 
@@ -70,7 +75,7 @@ data class RepositoryConfigurations(
           k.endsWith(".dir") -> {
             val name = k.substringBeforeLast('.')
             val config = configurations.getOrPut(name) { Configuration(name) }
-            config.dirPath = v
+            config.directory = v
           }
           k.endsWith(".url") -> {
             val name = k.substringBeforeLast('.')

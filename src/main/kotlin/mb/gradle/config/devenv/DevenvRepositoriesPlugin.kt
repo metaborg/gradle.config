@@ -14,7 +14,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
 
   private fun configure(project: Project) {
     val repositories = Repositories.fromRootDirectory(project.rootDir)
-    project.tasks.register<RepositoryTask>("repoList") {
+    project.tasks.register<RepositoryTask>("list") {
       doLast {
         println("Git URL prefix: ${repositories.urlPrefix}")
         println("Current branch: ${repositories.rootBranch}")
@@ -23,9 +23,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println(repo)
         }
       }
-      description = "Lists the Git repositories of devenv and their properties."
+      description = "Lists the repositories and their properties."
     }
-    project.tasks.register<RepositoryTask>("repoStatus") {
+    project.tasks.register<RepositoryTask>("status") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -34,9 +34,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: show its status"
+      description = "For each repository (with update=true): show its status."
     }
-    project.tasks.register<RepositoryTask>("repoClone") {
+    project.tasks.register<RepositoryTask>("clone") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -46,9 +46,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: clone the repository if it has not been cloned yet."
+      description = "For each repository (with update=true): clone the repository if it has not been cloned yet."
     }
-    project.tasks.register<RepositoryTask>("repoFetch") {
+    project.tasks.register<RepositoryTask>("fetch") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -57,9 +57,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: fetch from the main remote."
+      description = "For each repository (with update=true): fetch from the main remote."
     }
-    project.tasks.register<RepositoryTask>("repoCheckout") {
+    project.tasks.register<RepositoryTask>("checkout") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -68,9 +68,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: checkout the correct branch."
+      description = "For each repository (with update=true): checkout the correct branch."
     }
-    project.tasks.register<RepositoryTask>("repoUpdate") {
+    project.tasks.register<RepositoryTask>("update") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -85,9 +85,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
+      description = "For each repository (with update=true): check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
     }
-    project.tasks.register<RepositoryTask>("repoPush") {
+    project.tasks.register<RepositoryTask>("push") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -96,9 +96,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: push the current local branch to the main remote."
+      description = "For each repository (with update=true): push the current local branch to the main remote."
     }
-    project.tasks.register<RepositoryTask>("repoPushTags") {
+    project.tasks.register<RepositoryTask>("pushTags") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -107,9 +107,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: push the current local branch and annotated tags to the main remote."
+      description = "For each repository (with update=true): push the current local branch and annotated tags to the main remote."
     }
-    project.tasks.register<RepositoryTask>("repoPushAll") {
+    project.tasks.register<RepositoryTask>("pushAll") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -118,9 +118,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: push all local branches to the main remote."
+      description = "For each repository (with update=true): push all local branches to the main remote."
     }
-    project.tasks.register<RepositoryTask>("repoPushAllTags") {
+    project.tasks.register<RepositoryTask>("pushAllTags") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
@@ -129,7 +129,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           println()
         }
       }
-      description = "For each Git repository of devenv for which update is set to true: push all local branches and annotated tags to the main remote."
+      description = "For each repository (with update=true): push all local branches and annotated tags to the main remote."
     }
 
     // Shutdown JGit work queue after build is finished to free resources.
@@ -141,6 +141,6 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
 
 open class RepositoryTask : DefaultTask() {
   init {
-    group = "repository"
+    group = "Devenv repository"
   }
 }
