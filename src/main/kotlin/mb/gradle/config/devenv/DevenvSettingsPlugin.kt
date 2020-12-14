@@ -2,7 +2,6 @@ package mb.gradle.config.devenv
 
 import org.gradle.api.Plugin
 import org.gradle.api.initialization.Settings
-import java.io.File
 
 @Suppress("unused")
 class DevenvSettingsPlugin : Plugin<Settings> {
@@ -14,29 +13,24 @@ class DevenvSettingsPlugin : Plugin<Settings> {
 
 @Suppress("unused")
 open class DevenvSettingsExtension(private val settings: Settings) {
-  val repoProperties = toRepoConfigMap(repoProperties(settings.rootDir))
+  val repositoryConfigurations = RepositoryConfigurations.fromRootDirectory(settings.rootDir)
 
-  fun includeBuildsFromSubDirs(onlyIncludeBuildsFromIncludedRepos: Boolean = true) {
-    val rootDir = settings.rootDir
-
-    val includedRepoDirPaths = if(onlyIncludeBuildsFromIncludedRepos) {
-      val includedRepoDirPaths = HashSet<String>()
-      for((name, repoProperty) in repoProperties.entries) {
-        if(repoProperty.include == true) {
-          val dirPath = repoProperty.dirPath ?: name
-          includedRepoDirPaths.add(dirPath)
-        }
-      }
-      includedRepoDirPaths
-    } else {
-      HashSet()
+  fun includeBuildIfRepositoryIncluded(name: String) {
+    if(repositoryConfigurations.isIncluded(name)) {
+      includeBuildWithName(name, name)
     }
+  }
 
-    rootDir.list().forEach { dirPath ->
-      if(File(rootDir, "$dirPath/${Settings.DEFAULT_SETTINGS_FILE}").isFile || File(rootDir, "$dirPath/${Settings.DEFAULT_SETTINGS_FILE}.kts").isFile) {
-        if(!onlyIncludeBuildsFromIncludedRepos || includedRepoDirPaths.contains(dirPath)) {
-          settings.includeBuild(dirPath)
-        }
+  fun isRepositoryIncluded(name: String) = repositoryConfigurations.isIncluded(name)
+
+  fun includeBuildWithName(directory: String, name: String) {
+    settings.includeBuild(directory) {
+      try {
+        org.gradle.api.initialization.ConfigurableIncludedBuild::class.java
+          .getDeclaredMethod("setName", String::class.java)
+          .invoke(this, name)
+      } catch(e: NoSuchMethodException) {
+        // Running Gradle < 6, no need to set the name, ignore.
       }
     }
   }

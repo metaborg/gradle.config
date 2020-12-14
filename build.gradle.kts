@@ -70,9 +70,9 @@ gradlePlugin {
       id = "org.metaborg.gradle.config.devenv-settings"
       implementationClass = "mb.gradle.config.devenv.DevenvSettingsPlugin"
     }
-    create("metaborg-devenv") {
-      id = "org.metaborg.gradle.config.devenv"
-      implementationClass = "mb.gradle.config.devenv.DevenvPlugin"
+    create("metaborg-devenv-repositories") {
+      id = "org.metaborg.gradle.config.devenv-repositories"
+      implementationClass = "mb.gradle.config.devenv.DevenvRepositoriesPlugin"
     }
   }
 }
