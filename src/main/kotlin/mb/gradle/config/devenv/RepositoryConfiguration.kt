@@ -54,8 +54,8 @@ data class RepositoryConfigurations(
         var url: String? = null,
         var branch: String? = null
       ) {
-        fun toImmutable() = RepositoryConfiguration(name, include ?: false, update ?: include ?: false, directory
-          ?: name, url, branch)
+        fun toImmutable() = RepositoryConfiguration(name, include ?: false, update ?: include ?: false,
+          directory ?: name, url, branch)
       }
 
       var urlPrefix = "git@github.com:metaborg"

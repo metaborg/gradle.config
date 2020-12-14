@@ -13,7 +13,7 @@ metaborg {
 }
 
 dependencies {
-  implementation("org.eclipse.jgit:org.eclipse.jgit:5.3.1.201904271842-r")
+  implementation("org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r")
 
   // Compile-only dependencies for Gradle plugins that we need to use types from, but should still be applied/provided by users.
   compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
