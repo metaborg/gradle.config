@@ -8,8 +8,8 @@ plugins {
 }
 
 metaborg {
-  config.kotlinApiVersion = "1.2"
-  config.kotlinLanguageVersion = "1.2"
+  config.kotlinApiVersion = "1.3"
+  config.kotlinLanguageVersion = "1.3"
 }
 
 dependencies {

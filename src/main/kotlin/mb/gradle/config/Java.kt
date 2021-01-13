@@ -161,7 +161,7 @@ internal fun Project.configureJavaExecutableJar(publicationName: String) {
 
     doFirst { // Delay setting Main-Class attribute to just before execution, to ensure that mainClassName is set.
       manifest {
-        @Suppress("UnstableApiUsage")
+        @Suppress("UnstableApiUsage", "DEPRECATION") // Use deprecated version for Gradle 5.6.4 compatibility.
         attributes["Main-Class"] = project.the<JavaApplication>().mainClassName
       }
     }

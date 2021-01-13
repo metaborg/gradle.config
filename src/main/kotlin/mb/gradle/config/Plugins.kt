@@ -12,7 +12,7 @@ open class MetaborgExtension(private val project: Project) {
   }
 
 
-  var gradleWrapperVersion = "5.6.4"
+  var gradleWrapperVersion = "6.8"
   var gradleWrapperDistribution = Wrapper.DistributionType.BIN
   var javaVersion = JavaVersion.VERSION_1_8
   var javaCreatePublication = true
@@ -20,9 +20,9 @@ open class MetaborgExtension(private val project: Project) {
   var javaPublishSourcesJar = true
   var javaCreateJavadocJar = false
   var javaPublishJavadocJar = false
-  var kotlinApiVersion = "1.0"
-  var kotlinLanguageVersion = "1.0"
-  var junitVersion = "5.6.1"
+  var kotlinApiVersion = "1.3"
+  var kotlinLanguageVersion = "1.3"
+  var junitVersion = "5.7.0"
 
 
   fun configureSubProject() {

@@ -89,14 +89,14 @@ private fun TaskContainerScope.createCompositeBuildTask(project: Project, allNam
       val task = project.tasks.findByName(name)
       if(task != null) {
         this.dependsOn(task)
-      } else {
+      } else if(!project.name.endsWith(".root")) { // HACK: Ignore warning for .root projects.
         project.logger.warn("Composite build task '$allName' does not delegate to $project because it does not have a task named '$name'")
       }
     } else {
       // Root project with sub-projects: depend on tasks of sub-projects and included builds.
       this.dependsOn(project.subprojects.mapNotNull {
         it.tasks.findByName(name) ?: run {
-          project.logger.warn("Composite build task '$allName' does not delegate to $it because it does not have a task named '$name'")
+          project.logger.warn("Composite build task '$allName' does not delegate to sub-$it because it does not have a task named '$name'")
           null
         }
       })
