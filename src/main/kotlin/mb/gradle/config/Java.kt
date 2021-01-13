@@ -1,5 +1,6 @@
 package mb.gradle.config
 
+import org.gradle.api.JavaVersion
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.plugins.BasePlugin
@@ -46,11 +47,20 @@ fun Project.configureJavaGradlePlugin() {
 
 internal fun Project.configureJavaCompiler() {
   val extension = extensions.getByType<MetaborgExtension>()
-  @Suppress("UnstableApiUsage")
-  configure<JavaPluginExtension> {
-    sourceCompatibility = extension.javaVersion
-    targetCompatibility = extension.javaVersion
+  if(JavaVersion.current().isJava9Compatible) {
+    // JDK9 or higher: set the release flag
+    tasks.withType<JavaCompile> {
+      options.compilerArgs.addAll(listOf("--release", extension.javaVersion.majorVersion))
+    }
+  } else {
+    // JDK8 or lower: set source and target compatibility.
+    @Suppress("UnstableApiUsage")
+    configure<JavaPluginExtension> {
+      sourceCompatibility = extension.javaVersion
+      targetCompatibility = extension.javaVersion
+    }
   }
+
   tasks.withType<JavaCompile> {
     options.encoding = "UTF-8"
   }

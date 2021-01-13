@@ -60,7 +60,8 @@ fun Project.configureKotlinGradlePlugin() {
       experimentalWarning.set(false)
       jvmTarget.set(when(extension.javaVersion) {
         JavaVersion.VERSION_1_6 -> "1.6"
-        else -> "1.8"
+        JavaVersion.VERSION_1_8 -> "1.8"
+        else -> extension.javaVersion.majorVersion
       })
     }
   }
@@ -74,7 +75,8 @@ private fun Project.configureKotlinCompiler() {
     kotlinOptions.languageVersion = extension.kotlinLanguageVersion
     kotlinOptions.jvmTarget = when(extension.javaVersion) {
       JavaVersion.VERSION_1_6 -> "1.6"
-      else -> "1.8"
+      JavaVersion.VERSION_1_8 -> "1.8"
+      else -> extension.javaVersion.majorVersion
     }
     kotlinOptions.freeCompilerArgs = listOf("-Xjvm-default=compatibility")
   }
