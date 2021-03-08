@@ -79,6 +79,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
             repo.clone(project)
           } else {
             println("Updating repository $repo:")
+            repo.fetch(project)
             repo.checkout(project)
             repo.pull(project)
           }
