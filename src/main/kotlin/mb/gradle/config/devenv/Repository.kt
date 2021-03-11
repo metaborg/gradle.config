@@ -114,6 +114,14 @@ class Repository(
     execGitCmd(rootProject, "push", "--all", "--follow-tags")
   }
 
+  fun clean(rootProject: Project, dryRun: Boolean, removeIgnored: Boolean = false) {
+    // -X: remove untracked files
+    // -x: remove untracked and ignored untracked files
+    // -d: remove untracked directories
+    execGitCmd(rootProject, "clean", "--force", if (removeIgnored) "-x" else "-X", "-d",
+      if (dryRun) "--dry-run" else "")
+  }
+
   fun info() =
     String.format("  %1$-30s : include = %2$-5s, update = %3$-5s, branch = %4$-20s, path = %5$-30s, url = %6\$s", name, include, update, branch, directory, url)
 

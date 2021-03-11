@@ -135,6 +135,17 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "For each repository (with update=true): push all local branches and annotated tags to the main remote."
     }
+    project.tasks.register<CleanRepositoryTask>("clean") {
+      doLast {
+        for(repo in repositories.repositories.values) {
+          if(!repo.update) continue
+          println("Cleaning repository $repo:")
+          repo.clean(project, !force, removeIgnored)
+          println()
+        }
+      }
+      description = "For each repository (with update=true): remove untracked files and directories."
+    }
 
     // Shutdown JGit work queue after build is finished to free resources.
     project.gradle.buildFinished {
@@ -147,6 +158,16 @@ open class RepositoryTask : DefaultTask() {
   init {
     group = "Devenv repository"
   }
+}
+
+open class CleanRepositoryTask : RepositoryTask() {
+  @Input
+  @Option(option = "force", description = "Performs the clean without a dry-run.")
+  var force: Boolean = false
+
+  @Input
+  @Option(option = "removeIgnored", description = "Also remove ignored untracked files.")
+  var removeIgnored: Boolean = false
 }
 
 open class StatusRepositoryTask : RepositoryTask() {
