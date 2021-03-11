@@ -55,7 +55,7 @@ class Repository(
     rootProject.exec {
       this.executable = "git"
       this.workingDir = dir
-      this.args = args
+      this.args = args.filterNot { it.isBlank() }
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -70,7 +70,7 @@ class Repository(
   fun execGitCmdInRoot(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
     rootProject.exec {
       this.executable = "git"
-      this.args = args
+      this.args = args.filterNot { it.isBlank() }
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -78,8 +78,8 @@ class Repository(
   }
 
 
-  fun status(rootProject: Project) {
-    execGitCmd(rootProject, "status", printCommandLine = false)
+  fun status(rootProject: Project, short: Boolean = false) {
+    execGitCmd(rootProject, "status", if (short) "-sb" else "", printCommandLine = false)
   }
 
   fun clone(rootProject: Project) {

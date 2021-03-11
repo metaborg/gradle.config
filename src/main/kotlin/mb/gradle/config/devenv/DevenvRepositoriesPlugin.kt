@@ -4,6 +4,9 @@ import org.eclipse.jgit.lib.internal.WorkQueue
 import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.Input
+import org.gradle.api.tasks.Optional
+import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.*
 
 @Suppress("unused")
@@ -25,12 +28,12 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "Lists the repositories and their properties."
     }
-    project.tasks.register<RepositoryTask>("status") {
+    project.tasks.register<StatusRepositoryTask>("status") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
           println("Status for repository $repo:")
-          repo.status(project)
+          repo.status(project, short)
           println()
         }
       }
@@ -144,4 +147,11 @@ open class RepositoryTask : DefaultTask() {
   init {
     group = "Devenv repository"
   }
+}
+
+class StatusRepositoryTask : RepositoryTask() {
+  @Input
+  @Optional
+  @Option(option = "short", description = "Print short status info.")
+  var short: Boolean = false
 }
