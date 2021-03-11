@@ -114,11 +114,11 @@ class Repository(
     execGitCmd(rootProject, "push", "--all", "--follow-tags")
   }
 
-  fun clean(rootProject: Project, dryRun: Boolean, removeUntracked: Boolean = false) {
+  fun clean(rootProject: Project, dryRun: Boolean, removeIgnored: Boolean = false) {
     // -X: remove untracked files
     // -x: remove untracked and ignored untracked files
     // -d: remove untracked directories
-    execGitCmd(rootProject, "clean", "--force", if (removeUntracked) "-x" else "-X", "-d",
+    execGitCmd(rootProject, "clean", "--force", if (removeIgnored) "-x" else "-X", "-d",
       if (dryRun) "--dry-run" else "")
   }
 
