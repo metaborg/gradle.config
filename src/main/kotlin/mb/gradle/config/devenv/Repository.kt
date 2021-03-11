@@ -78,8 +78,8 @@ class Repository(
   }
 
 
-  fun status(rootProject: Project) {
-    execGitCmd(rootProject, "status", printCommandLine = false)
+  fun status(rootProject: Project, short: Boolean = false) {
+    execGitCmd(rootProject, "-c", "color.status=always", "status", if (short) "-sb" else "", printCommandLine = false)
   }
 
   fun clone(rootProject: Project) {

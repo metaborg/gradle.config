@@ -28,12 +28,12 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "Lists the repositories and their properties."
     }
-    project.tasks.register<RepositoryTask>("status") {
+    project.tasks.register<StatusRepositoryTask>("status") {
       doLast {
         for(repo in repositories.repositories.values) {
           if(!repo.update) continue
           println("Status for repository $repo:")
-          repo.status(project)
+          repo.status(project, short)
           println()
         }
       }
@@ -168,4 +168,10 @@ open class CleanRepositoryTask : RepositoryTask() {
   @Input
   @Option(option = "removeIgnored", description = "Also remove ignored untracked files.")
   var removeIgnored: Boolean = false
+}
+
+open class StatusRepositoryTask : RepositoryTask() {
+  @Input
+  @Option(option = "short", description = "Print short status info.")
+  var short: Boolean = false
 }
