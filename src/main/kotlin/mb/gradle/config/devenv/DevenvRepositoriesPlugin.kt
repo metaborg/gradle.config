@@ -162,12 +162,10 @@ open class RepositoryTask : DefaultTask() {
 
 class CleanRepositoryTask : RepositoryTask() {
   @Input
-  @Optional
   @Option(option = "force", description = "Performs the clean without a dry-run.")
   var force: Boolean = false
 
   @Input
-  @Optional
   @Option(option = "removeIgnored", description = "Also remove ignored untracked files.")
   var removeIgnored: Boolean = false
 }
