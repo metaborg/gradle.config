@@ -160,7 +160,7 @@ open class RepositoryTask : DefaultTask() {
   }
 }
 
-class CleanRepositoryTask : RepositoryTask() {
+open class CleanRepositoryTask : RepositoryTask() {
   @Input
   @Option(option = "force", description = "Performs the clean without a dry-run.")
   var force: Boolean = false
