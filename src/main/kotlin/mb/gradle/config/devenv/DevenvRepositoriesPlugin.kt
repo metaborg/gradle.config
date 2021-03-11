@@ -151,7 +151,6 @@ open class RepositoryTask : DefaultTask() {
 
 class StatusRepositoryTask : RepositoryTask() {
   @Input
-  @Optional
   @Option(option = "short", description = "Print short status info.")
   var short: Boolean = false
 }
