@@ -55,7 +55,7 @@ class Repository(
     rootProject.exec {
       this.executable = "git"
       this.workingDir = dir
-      this.args = args
+      this.args = args.filterNot { it.isBlank() }
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -70,7 +70,7 @@ class Repository(
   fun execGitCmdInRoot(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
     rootProject.exec {
       this.executable = "git"
-      this.args = args
+      this.args = args.filterNot { it.isBlank() }
       if(printCommandLine) {
         println(commandLine.joinToString(separator = " "))
       }
@@ -112,6 +112,14 @@ class Repository(
 
   fun pushAllTags(rootProject: Project) {
     execGitCmd(rootProject, "push", "--all", "--follow-tags")
+  }
+
+  fun clean(rootProject: Project, dryRun: Boolean, removeIgnored: Boolean = false) {
+    // -X: remove untracked files
+    // -x: remove untracked and ignored untracked files
+    // -d: remove untracked directories
+    execGitCmd(rootProject, "clean", "--force", if (removeIgnored) "-x" else "-X", "-d",
+      if (dryRun) "--dry-run" else "")
   }
 
   fun info() =
