@@ -47,17 +47,18 @@ fun Project.configureJavaGradlePlugin() {
 
 internal fun Project.configureJavaCompiler() {
   val extension = extensions.getByType<MetaborgExtension>()
+
+  // Always set source and target compatibility to ensure IntelliJ sets the right Java version.
+  @Suppress("UnstableApiUsage")
+  configure<JavaPluginExtension> {
+    sourceCompatibility = extension.javaVersion
+    targetCompatibility = extension.javaVersion
+  }
+
   if(JavaVersion.current().isJava9Compatible) {
-    // JDK9 or higher: set the release flag
+    // JDK9 or higher: also set the release flag
     tasks.withType<JavaCompile> {
       options.compilerArgs.addAll(listOf("--release", extension.javaVersion.majorVersion))
-    }
-  } else {
-    // JDK8 or lower: set source and target compatibility.
-    @Suppress("UnstableApiUsage")
-    configure<JavaPluginExtension> {
-      sourceCompatibility = extension.javaVersion
-      targetCompatibility = extension.javaVersion
     }
   }
 

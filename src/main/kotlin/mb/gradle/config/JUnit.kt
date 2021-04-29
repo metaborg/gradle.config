@@ -26,8 +26,6 @@ internal fun Project.configureJUnit() {
   dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter:$junitVersion")
   }
-  val extra = gradle.rootProject.extra
-  val failedTestsProperty = "failedTests"
   tasks.withType<Test> {
     @Suppress("UnstableApiUsage")
     useJUnitPlatform()
@@ -52,36 +50,6 @@ internal fun Project.configureJUnit() {
         showCauses = true
         showStackTraces = true
         exceptionFormat = TestExceptionFormat.FULL
-      }
-    }
-    afterTest(KotlinClosure2<TestDescriptor, TestResult, Unit>({ descriptor, result ->
-      if(result.resultType == TestResult.ResultType.FAILURE) {
-        if(!extra.has(failedTestsProperty)) {
-          extra.set(failedTestsProperty, "")
-        }
-        val exception = result.exception
-        val stacktrace = if(exception != null) {
-          val stringWriter = StringWriter()
-          val writer = PrintWriter(stringWriter)
-          exception.printStackTrace(writer)
-          writer.close()
-          "\n$stringWriter"
-        } else {
-          ""
-        }
-        extra[failedTestsProperty] = "${extra[failedTestsProperty].toString()}\n${descriptor.className} > ${descriptor.name} FAILED$stacktrace"
-        this.reports
-      }
-    }))
-  }
-  gradle.buildFinished {
-    if(extra.has(failedTestsProperty)) {
-      val failedTests = extra.get(failedTestsProperty)
-      if(failedTests != null && !failedTests.toString().isBlank()) {
-        println()
-        println("> TEST FAILURE SUMMARY")
-        println(failedTests)
-        extra.set(failedTestsProperty, null)
       }
     }
   }
