@@ -1,6 +1,6 @@
 [![GitHub license](https://img.shields.io/github/license/metaborg/gradle.config)](https://github.com/metaborg/gradle.config/blob/master/LICENSE)
 [![Jenkins](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master)](https://buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master/lastBuild)
-[![coronium](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fgradle.config%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/gradle.config?repo=metaborg-releases)
+[![gradle.config](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fgradle.config%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/gradle.config?repo=metaborg-releases)
 
 
 # Gradle Config Plugins
