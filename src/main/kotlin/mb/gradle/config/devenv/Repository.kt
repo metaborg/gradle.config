@@ -2,6 +2,41 @@ package mb.gradle.config.devenv
 
 import org.gradle.api.Project
 import java.io.File
+import java.util.regex.Pattern
+
+enum class Transport {
+  SSH, HTTPS;
+
+  private val httpsPattern = Pattern.compile("https?://([\\w.@:\\-~]+)/(.+)")
+  private val sshPattern = Pattern.compile("(?:ssh://)?([\\w.@\\-~]+)@([\\w.@\\-~]+)[:/](.+)")
+
+  fun convert(url: String): String {
+    val httpsMatch = httpsPattern.matcher(url)
+    val sshMatch = sshPattern.matcher(url)
+    val user: String
+    val host: String
+    val path: String
+    when {
+      httpsMatch.matches() -> {
+        user = "git"
+        host = httpsMatch.group(1)
+        path = httpsMatch.group(2)
+      }
+      sshMatch.matches() -> {
+        user = sshMatch.group(1)
+        host = sshMatch.group(2)
+        path = sshMatch.group(3)
+      }
+      else -> {
+        throw RuntimeException("Cannot convert URL '$url' to '$this' format; unknown URL format")
+      }
+    }
+    return when(this) {
+      SSH -> "$user@$host:$path"
+      HTTPS -> "https://$host/$path"
+    }
+  }
+}
 
 data class Repositories(
   val rootDirectory: File,
@@ -79,11 +114,11 @@ class Repository(
 
 
   fun status(rootProject: Project, short: Boolean = false) {
-    execGitCmd(rootProject, "-c", "color.status=always", "status", if (short) "-sb" else "", printCommandLine = false)
+    execGitCmd(rootProject, "-c", "color.status=always", "status", if(short) "-sb" else "", printCommandLine = false)
   }
 
-  fun clone(rootProject: Project) {
-    execGitCmdInRoot(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, url, directory)
+  fun clone(rootProject: Project, transport: Transport) {
+    execGitCmdInRoot(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory)
   }
 
   fun fetch(rootProject: Project) {
@@ -118,8 +153,8 @@ class Repository(
     // -X: remove untracked files
     // -x: remove untracked and ignored untracked files
     // -d: remove untracked directories
-    execGitCmd(rootProject, "clean", "--force", if (removeIgnored) "-x" else "-X", "-d",
-      if (dryRun) "--dry-run" else "")
+    execGitCmd(rootProject, "clean", "--force", if(removeIgnored) "-x" else "-X", "-d",
+      if(dryRun) "--dry-run" else "")
   }
 
   fun info() =

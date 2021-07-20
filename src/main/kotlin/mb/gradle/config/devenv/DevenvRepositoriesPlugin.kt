@@ -5,7 +5,6 @@ import org.gradle.api.DefaultTask
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
-import org.gradle.api.tasks.Optional
 import org.gradle.api.tasks.options.Option
 import org.gradle.kotlin.dsl.*
 
@@ -45,7 +44,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           if(!repo.update) continue
           if(repo.isCheckedOut(project.rootDir)) continue
           println("Cloning repository $repo:")
-          repo.clone(project)
+          repo.clone(project, transport)
           println()
         }
       }
@@ -79,7 +78,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           if(!repo.update) continue
           if(!repo.isCheckedOut(project.rootDir)) {
             println("Cloning repository $repo:")
-            repo.clone(project)
+            repo.clone(project, transport)
           } else {
             println("Updating repository $repo:")
             repo.fetch(project)
@@ -154,7 +153,12 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
   }
 }
 
+
 open class RepositoryTask : DefaultTask() {
+  @Input
+  @Option(option = "transport", description = "Transport protocol to use. Defaults to SSH.")
+  var transport: Transport = Transport.SSH
+
   init {
     group = "Devenv repository"
   }
