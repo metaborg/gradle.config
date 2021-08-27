@@ -122,7 +122,7 @@ class Repository(
   }
 
   fun fetch(rootProject: Project) {
-    execGitCmd(rootProject, "fetch", "--quiet", "--recurse-submodules")
+    execGitCmd(rootProject, "fetch", "--quiet", "--recurse-submodules", "--all")
   }
 
   fun checkout(rootProject: Project) {
