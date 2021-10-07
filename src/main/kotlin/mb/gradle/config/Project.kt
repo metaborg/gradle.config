@@ -77,6 +77,7 @@ private fun Project.createCompositeBuildTasks() {
     createCompositeBuildTask(project, "assembleAll", "assemble", "Assembles the outputs for all projects in the composite build.")
     createCompositeBuildTask(project, "buildAll", "build", "Assembles and tests all projects in the composite build.")
     createCompositeBuildTask(project, "publishAll", "publish", "Publishes all publications produced by all projects in the composite build.")
+    createCompositeBuildTask(project, "publishAllToMavenLocal", "publishToMavenLocal", "Publishes all publications produced by all projects in the composite build to Maven local.")
   }
 }
 
