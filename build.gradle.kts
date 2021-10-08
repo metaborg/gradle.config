@@ -1,6 +1,6 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.3.1" // Bootstrap with version 0.3.1, higher does not seem to work.
+  id("org.metaborg.gradle.config.root-project") version "0.4.7" // Bootstrap
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.4.7" // Bootstrap
   id("org.metaborg.gitonium") version "0.1.4"
   kotlin("jvm") version "1.3.41" // Stick with 1.3.41: Gradle 5.6.4's kotlin-dsl plugin uses it.
   `kotlin-dsl`
@@ -8,8 +8,8 @@ plugins {
 }
 
 metaborg {
-  config.kotlinApiVersion = "1.3"
-  config.kotlinLanguageVersion = "1.3"
+  kotlinApiVersion = "1.3"
+  kotlinLanguageVersion = "1.3"
 }
 
 dependencies {
