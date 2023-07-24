@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+### Changed
+- Project uses default Gradle wrapper location to allow easy import in IntelliJ.
+
 
 ## [0.4.7] - 2021-10-08
 ### Added
