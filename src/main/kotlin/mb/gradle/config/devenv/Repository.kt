@@ -114,7 +114,7 @@ class Repository(
 
 
   fun status(rootProject: Project, short: Boolean = false) {
-    execGitCmd(rootProject, "-c", "color.status=always", "status", if(short) "-sb" else "", printCommandLine = false)
+    execGitCmd(rootProject, "-c", "color.status=always", "status", "--branch", if(short) "--short" else "", printCommandLine = false)
   }
 
   fun clone(rootProject: Project, transport: Transport) {
@@ -155,6 +155,11 @@ class Repository(
     // -d: remove untracked directories
     execGitCmd(rootProject, "clean", "--force", if(removeIgnored) "-x" else "-X", "-d",
       if(dryRun) "--dry-run" else "")
+  }
+
+  /** Prints the current commit of this repository. */
+  fun printCommit(rootProject: Project) {
+    execGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false)
   }
 
   fun info() =

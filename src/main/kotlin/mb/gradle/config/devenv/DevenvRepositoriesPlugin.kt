@@ -45,6 +45,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           if(repo.isCheckedOut(project.rootDir)) continue
           println("Cloning repository $repo:")
           repo.clone(project, transport)
+          repo.printCommit(project)
           println()
         }
       }
@@ -67,6 +68,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           if(!repo.update) continue
           println("Checking out ${repo.branch} for repository $repo:")
           repo.checkout(project)
+          repo.printCommit(project)
           println()
         }
       }
@@ -79,11 +81,13 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
           if(!repo.isCheckedOut(project.rootDir)) {
             println("Cloning repository $repo:")
             repo.clone(project, transport)
+            repo.printCommit(project)
           } else {
             println("Updating repository $repo:")
             repo.fetch(project)
             repo.checkout(project)
             repo.pull(project)
+            repo.printCommit(project)
           }
           println()
         }
