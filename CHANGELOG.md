@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
+
+
+## [0.4.8] - 2023-07-24
+### Added
+- Prints the commit hashes when performing a clone or update.
+
 ### Changed
 - Project uses default Gradle wrapper location to allow easy import in IntelliJ.
 
@@ -18,4 +24,5 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 
 [Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...HEAD
+[0.4.8]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...release-0.4.8
 [0.4.7]: https://github.com/metaborg/gradle.config/compare/release-0.4.6...release-0.4.7
