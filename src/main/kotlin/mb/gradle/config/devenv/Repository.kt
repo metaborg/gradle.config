@@ -157,6 +157,10 @@ class Repository(
       if(dryRun) "--dry-run" else "")
   }
 
+  fun reset(rootProject: Project, hard: Boolean) {
+    execGitCmd(rootProject, "reset", branch, if(hard) "--hard" else "--mixed")
+  }
+
   /** Prints the current commit of this repository. */
   fun printCommit(rootProject: Project) {
     execGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false)

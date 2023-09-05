@@ -149,6 +149,17 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "For each repository (with update=true): remove untracked files and directories."
     }
+    project.tasks.register<ResetRepositoryTask>("reset") {
+      doLast {
+        for(repo in repositories.repositories.values) {
+          if(!repo.update) continue
+          println("Resetting repository $repo:")
+          repo.reset(project, hard)
+          println()
+        }
+      }
+      description = "For each repository (with update=true): reset untracked files and directories."
+    }
 
     // Shutdown JGit work queue after build is finished to free resources.
     project.gradle.buildFinished {
@@ -176,6 +187,12 @@ open class CleanRepositoryTask : RepositoryTask() {
   @Input
   @Option(option = "removeIgnored", description = "Also remove ignored untracked files.")
   var removeIgnored: Boolean = false
+}
+
+open class ResetRepositoryTask : RepositoryTask() {
+  @Input
+  @Option(option = "hard", description = "Performs a hard reset.")
+  var hard: Boolean = false
 }
 
 open class StatusRepositoryTask : RepositoryTask() {
