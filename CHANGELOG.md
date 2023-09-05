@@ -4,7 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
-- Add `reset` command.
+
+
+## [0.4.9] - 2023-09-05
+- Add `reset` command, which does a mixed reset to the branch by default.
+  If `--hard` is specified, it does a hard reset.
 
 
 ## [0.4.8] - 2023-07-24
@@ -24,6 +28,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.4.9...HEAD
+[0.4.9]: https://github.com/metaborg/gradle.config/compare/release-0.4.8...release-0.4.9
 [0.4.8]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...release-0.4.8
 [0.4.7]: https://github.com/metaborg/gradle.config/compare/release-0.4.6...release-0.4.7
