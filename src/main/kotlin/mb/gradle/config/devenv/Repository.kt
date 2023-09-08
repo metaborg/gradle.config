@@ -1,7 +1,10 @@
 package mb.gradle.config.devenv
 
 import org.gradle.api.Project
+import org.gradle.process.ExecResult
+import java.io.ByteArrayOutputStream
 import java.io.File
+import java.io.OutputStream
 import java.util.regex.Pattern
 
 enum class Transport {
@@ -38,29 +41,30 @@ enum class Transport {
   }
 }
 
-data class Repositories(
+data class RootRepository(
   val rootDirectory: File,
   val rootBranch: String,
   val urlPrefix: String,
   val repositories: Map<String, Repository>
 ) {
   companion object {
-    fun fromRootDirectory(rootDirectory: File): Repositories {
+    fun fromRootDirectory(rootDirectory: File): RootRepository {
       val repoConfigs = RepositoryConfigurations.fromRootDirectory(rootDirectory)
       val rootBranch = getCurrentGitBranch(rootDirectory)
       return fromRepoConfigs(rootDirectory, rootBranch, repoConfigs)
     }
 
-    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String, repositoryConfigurations: RepositoryConfigurations): Repositories {
+    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String, repositoryConfigurations: RepositoryConfigurations): RootRepository {
       val repos = repositoryConfigurations.configurations.mapValues { (name, repoConfig) ->
         val include = repoConfig.include
         val update = repoConfig.update
         val directory = repoConfig.directory
         val url = repoConfig.url ?: "${repositoryConfigurations.urlPrefix}/$name.git"
         val branch = repoConfig.branch ?: rootBranch
-        Repository(name, include, update, directory, url, branch)
+        val submodule = repoConfig.submodule
+        Repository(name, include, update, directory, url, branch, submodule)
       }
-      return Repositories(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
+      return RootRepository(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
     }
   }
 }
@@ -71,47 +75,72 @@ class Repository(
   val update: Boolean,
   val directory: String,
   val url: String,
-  val branch: String
+  val branch: String,
+  /** Whether the repository is a submodule. */
+  val submodule: Boolean
 ) {
-  fun dir(rootDir: File) = rootDir.resolve(directory)
+  private fun dir(rootDir: File): File = rootDir.resolve(directory)
 
-  fun isCheckedOut(rootDir: File) = dir(rootDir).exists()
+  /**
+   * Determines if the repository is present and (in case of a submodule) initialized
+   */
+  fun isCheckedOut(rootProject: Project): Boolean =
+     dir(rootProject.rootDir).exists() && if (submodule) !submoduleStatus(rootProject).startsWith("-") else true
 
-
-  fun execGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true) {
-    execGitCmd(rootProject, mutableListOf(*args), printCommandLine)
+  /**
+   * Executes the specified Git command in the subdirectory of the repository, asserting that the command succeeded
+   * and optionally capturing the standard output.
+   *
+   * @param rootProject the Gradle project
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or `null` if [captureOutput] is `false`
+   */
+  fun execGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false): String? {
+    (if (captureOutput) ByteArrayOutputStream() else null).use { stream ->
+      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = false, standardOutput = stream)
+      result.assertNormalExitValue()
+      return stream?.let { stream.toString("UTF-8") }
+    }
   }
 
-  fun execGitCmd(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
+  /**
+   * Executes the specified Git command in the root directory of the project, asserting that the command succeeded
+   * and optionally capturing the standard output.
+   *
+   * @param rootProject the Gradle project
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or `null` if [captureOutput] is `false`
+   */
+  fun execGitCmdInRoot(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false): String? {
+    (if (captureOutput) ByteArrayOutputStream() else null).use { stream ->
+      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = true, standardOutput = stream)
+      result.assertNormalExitValue()
+      return stream?.let { stream.toString("UTF-8") }
+    }
+  }
+
+  private fun internalExecGitCmd(
+    rootProject: Project,
+    args: MutableList<String>,
+    printCommandLine: Boolean = true,
+    standardOutput: OutputStream? = null,
+    root: Boolean = false
+  ): ExecResult {
     val dir = dir(rootProject.projectDir)
-    if(!dir.exists()) {
-      error("Cannot execute git command in directory $dir, directory does not exist")
-    }
-    rootProject.exec {
+    if (!root) check(dir.exists()) { "Cannot execute git command in directory $dir, directory does not exist" }
+    val result = rootProject.exec {
       this.executable = "git"
-      this.workingDir = dir
+      if (!root) { this.workingDir = dir }
       this.args = args.filterNot { it.isBlank() }
-      if(printCommandLine) {
-        println(commandLine.joinToString(separator = " "))
-      }
+      standardOutput?.let { this.standardOutput = it }
+      if(printCommandLine) println(commandLine.joinToString(separator = " "))
     }
+    return result
   }
-
-
-  fun execGitCmdInRoot(rootProject: Project, vararg args: String, printCommandLine: Boolean = true) {
-    execGitCmdInRoot(rootProject, mutableListOf(*args), printCommandLine)
-  }
-
-  fun execGitCmdInRoot(rootProject: Project, args: MutableList<String>, printCommandLine: Boolean = true) {
-    rootProject.exec {
-      this.executable = "git"
-      this.args = args.filterNot { it.isBlank() }
-      if(printCommandLine) {
-        println(commandLine.joinToString(separator = " "))
-      }
-    }
-  }
-
 
   fun status(rootProject: Project, short: Boolean = false) {
     execGitCmd(rootProject, "-c", "color.status=always", "status", "--branch", if(short) "--short" else "", printCommandLine = false)
@@ -121,12 +150,20 @@ class Repository(
     execGitCmdInRoot(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory)
   }
 
+  fun submoduleStatus(rootProject: Project): String {
+    return execGitCmdInRoot(rootProject, "submodule", "status", "--", directory, printCommandLine = false, captureOutput = true)!!
+  }
+
+  fun submoduleInit(rootProject: Project) {
+    execGitCmdInRoot(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory)
+  }
+
   fun fetch(rootProject: Project) {
     execGitCmd(rootProject, "fetch", "--quiet", "--recurse-submodules", "--all")
   }
 
   fun checkout(rootProject: Project) {
-    execGitCmd(rootProject, "checkout", "--quiet", branch)
+    execGitCmd(rootProject, "checkout", "--quiet", "--", branch)
   }
 
   fun pull(rootProject: Project) {
@@ -166,8 +203,23 @@ class Repository(
     execGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false)
   }
 
+  /**
+   * Fixes the detached head on a submodule by moving the branch pointer to the current commit
+   * and checking out the branch.
+   */
+  fun fixBranch(rootProject: Project) {
+    // Ensure we are in detached HEAD mode
+    execGitCmd(rootProject, "checkout", "--quiet", "--detach")
+    // Force the branch to point to our detached HEAD
+    execGitCmd(rootProject, "branch", "--force", "--quiet", "--", branch)
+    // Checkout the branch, reattaching the HEAD
+    checkout(rootProject)
+  }
+
+  val fancyName: String get() = if (submodule) "submodule $name" else "repository $name"
+
   fun info() =
-    String.format("  %1$-30s : include = %2$-5s, update = %3$-5s, branch = %4$-20s, path = %5$-30s, url = %6\$s", name, include, update, branch, directory, url)
+    String.format("  %1\$-30s : include = %2\$-5s, update = %3\$-5s, submodule = %4\$-5s, branch = %5\$-20s, path = %6\$-30s, url = %7\$s", name, include, update, submodule, branch, directory, url)
 
   override fun toString() = name
 }

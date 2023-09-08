@@ -2,6 +2,7 @@ package mb.gradle.config.devenv
 
 import org.eclipse.jgit.lib.internal.WorkQueue
 import org.gradle.api.DefaultTask
+import org.gradle.api.InvalidUserDataException
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.tasks.Input
@@ -15,24 +16,44 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
   }
 
   private fun configure(project: Project) {
-    val repositories = Repositories.fromRootDirectory(project.rootDir)
+    val rootRepository = RootRepository.fromRootDirectory(project.rootDir)
     project.tasks.register<RepositoryTask>("list") {
       doLast {
-        println("Git URL prefix: ${repositories.urlPrefix}")
-        println("Current branch: ${repositories.rootBranch}")
-        println("Repositories:")
-        for(repo in repositories.repositories.values) {
-          println(repo)
+        println("Git URL prefix: ${rootRepository.urlPrefix}")
+        println("Current branch: ${rootRepository.rootBranch}")
+        val allRepositories = rootRepository.repositories.values
+        val repositories = allRepositories.filter { !it.submodule }
+        if (repositories.isNotEmpty()) {
+          println("Repositories:")
+          for (repo in repositories) {
+            println(repo)
+          }
+        }
+        val submodules = allRepositories.filter { it.submodule }
+        if (submodules.isNotEmpty()) {
+          println("Submodules:")
+          for (repo in submodules) {
+            println(repo)
+          }
+        }
+        if (repositories.isEmpty() && submodules.isEmpty()) {
+          println("No repositories or submodules configured.")
         }
       }
       description = "Lists the repositories and their properties."
     }
     project.tasks.register<StatusRepositoryTask>("status") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Status for repository $repo:")
-          repo.status(project, short)
+        val selected = getSelectedRepositories(rootRepository, allowNotUpdated = true)
+        for(repo in selected) {
+          println("Status for ${repo.fancyName}:")
+          if (!repo.update) {
+            println("Not updated ${repo.fancyName}")
+          } else if(repo.isCheckedOut(project)) {
+            repo.status(project, short)
+          } else {
+            println("Not cloned ${repo.fancyName}")
+          }
           println()
         }
       }
@@ -40,11 +61,18 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("clone") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          if(repo.isCheckedOut(project.rootDir)) continue
-          println("Cloning repository $repo:")
-          repo.clone(project, transport)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(repo.isCheckedOut(project)) {
+            println("Already cloned ${repo.fancyName}.")
+          } else if (repo.submodule) {
+            println("Initializing ${repo.fancyName}:")
+            repo.submoduleInit(project)
+            repo.fixBranch(project)
+          } else {
+            println("Cloning ${repo.fancyName}:")
+            repo.clone(project, transport)
+          }
           repo.printCommit(project)
           println()
         }
@@ -53,10 +81,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("fetch") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Fetching for repository $repo:")
-          repo.fetch(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Fetching for ${repo.fancyName}:")
+            repo.fetch(project)
+          }
           println()
         }
       }
@@ -64,11 +96,15 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("checkout") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Checking out ${repo.branch} for repository $repo:")
-          repo.checkout(project)
-          repo.printCommit(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Checking out ${repo.branch} for ${repo.fancyName}:")
+            repo.checkout(project)
+            repo.printCommit(project)
+          }
           println()
         }
       }
@@ -76,14 +112,20 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("update") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          if(!repo.isCheckedOut(project.rootDir)) {
-            println("Cloning repository $repo:")
-            repo.clone(project, transport)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            if (repo.submodule) {
+              println("Initializing ${repo.fancyName}:")
+              repo.submoduleInit(project)
+              repo.fixBranch(project)
+            } else {
+              println("Cloning ${repo.fancyName}:")
+              repo.clone(project, transport)
+            }
             repo.printCommit(project)
           } else {
-            println("Updating repository $repo:")
+            println("Updating ${repo.fancyName}:")
             repo.fetch(project)
             repo.checkout(project)
             repo.pull(project)
@@ -96,10 +138,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("push") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing current branch for repository $repo:")
-          repo.push(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Pushing current branch for ${repo.fancyName}:")
+            repo.push(project)
+          }
           println()
         }
       }
@@ -107,10 +153,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushTags") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing current branch and annotated tags for repository $repo:")
-          repo.pushTags(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Pushing current branch and annotated tags for ${repo.fancyName}:")
+            repo.pushTags(project)
+          }
           println()
         }
       }
@@ -118,10 +168,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushAll") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing all branches for repository $repo:")
-          repo.pushAll(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Pushing all branches for ${repo.fancyName}:")
+            repo.pushAll(project)
+          }
           println()
         }
       }
@@ -129,10 +183,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushAllTags") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing all branches and annotated tags for repository $repo:")
-          repo.pushAllTags(project)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Pushing all branches and annotated tags for ${repo.fancyName}:")
+            repo.pushAllTags(project)
+          }
           println()
         }
       }
@@ -140,10 +198,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<CleanRepositoryTask>("clean") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Cleaning repository $repo:")
-          repo.clean(project, !force, removeIgnored)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Cleaning ${repo.fancyName}:")
+            repo.clean(project, !force, removeIgnored)
+          }
           println()
         }
       }
@@ -151,10 +213,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<ResetRepositoryTask>("reset") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Resetting repository $repo:")
-          repo.reset(project, hard)
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            println("Not cloned ${repo.fancyName}")
+          } else {
+            println("Resetting ${repo.fancyName}:")
+            repo.reset(project, hard)
+          }
           println()
         }
       }
@@ -166,6 +232,20 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       WorkQueue.getExecutor().shutdown()
     }
   }
+
+  private fun RepositoryTask.getSelectedRepositories(rootRepository: RootRepository, allowNotUpdated: Boolean = false): Collection<Repository> {
+    val selectedRepoNames = repos.takeIf { it.isNotEmpty() } ?: return rootRepository.repositories.values
+    val selectedRepositories = rootRepository.repositories.filterKeys { key -> key in selectedRepoNames }.values
+    val unknownRepositories = selectedRepoNames.filter { it !in rootRepository.repositories.keys }
+    if (unknownRepositories.isNotEmpty()) {
+      throw InvalidUserDataException("Unknown repositories: $unknownRepositories, only the following repositories are known: ${rootRepository.repositories.keys}")
+    }
+    val notUpdatedRepositories = selectedRepositories.filter { !it.update }
+    if (!allowNotUpdated && notUpdatedRepositories.isNotEmpty()) {
+      throw InvalidUserDataException("Cannot perform task on repositories that are not updated: $notUpdatedRepositories")
+    }
+    return selectedRepositories
+  }
 }
 
 
@@ -173,6 +253,10 @@ open class RepositoryTask : DefaultTask() {
   @Input
   @Option(option = "transport", description = "Transport protocol to use. Defaults to SSH.")
   var transport: Transport = Transport.SSH
+
+  @Input
+  @Option(option = "repo", description = "Repository to perform the task on. Defaults to all repositories.")
+  var repos: List<String> = emptyList()
 
   init {
     group = "Devenv repository"

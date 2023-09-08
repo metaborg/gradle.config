@@ -10,7 +10,8 @@ data class RepositoryConfiguration(
   val update: Boolean,
   val directory: String,
   val url: String? = null,
-  val branch: String? = null
+  val branch: String? = null,
+  val submodule: Boolean = false
 )
 
 data class RepositoryConfigurations(
@@ -52,10 +53,18 @@ data class RepositoryConfigurations(
         var update: Boolean? = null,
         var directory: String? = null,
         var url: String? = null,
-        var branch: String? = null
+        var branch: String? = null,
+        var submodule: Boolean? = null
       ) {
-        fun toImmutable() = RepositoryConfiguration(name, include ?: false, update ?: include ?: false,
-          directory ?: name, url, branch)
+        fun toImmutable() = RepositoryConfiguration(
+          name,
+          include ?: false,
+          update ?: include ?: false,
+          directory ?: name,
+          url,
+          branch,
+          submodule ?: false
+        )
       }
 
       var urlPrefix = "git@github.com:metaborg"
@@ -86,6 +95,11 @@ data class RepositoryConfigurations(
             val name = k.substringBeforeLast('.')
             val config = configurations.getOrPut(name) { Configuration(name) }
             config.branch = v
+          }
+          k.endsWith(".submodule") -> {
+            val name = k.substringBeforeLast('.')
+            val config = configurations.getOrPut(name) { Configuration(name) }
+            config.submodule = v == "true"
           }
           k.endsWith(".jenkinsjob") -> {
             // Ignore
