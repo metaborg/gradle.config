@@ -163,7 +163,7 @@ class Repository(
   }
 
   fun checkout(rootProject: Project) {
-    execGitCmd(rootProject, "checkout", "--quiet", "--", branch)
+    execGitCmd(rootProject, "switch", "--quiet", "--", branch)
   }
 
   fun pull(rootProject: Project) {
