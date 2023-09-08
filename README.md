@@ -1,6 +1,6 @@
 [![GitHub license](https://img.shields.io/github/license/metaborg/gradle.config)](https://github.com/metaborg/gradle.config/blob/master/LICENSE)
 [![GitHub build](https://img.shields.io/github/actions/workflow/status/metaborg/gradle.config/build.yml?label=GitHub%20build)](https://github.com/metaborg/gradle.config/actions/workflows/build.yml)
-[![Jenkins build](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master?label=Jenkins build)](https://buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master/lastBuild)
+[![Jenkins build](https://img.shields.io/jenkins/build/https/buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master?label=Jenkins%20build)](https://buildfarm.metaborg.org/job/metaborg/job/gradle.config/job/master/lastBuild)
 [![gradle.config](https://img.shields.io/maven-metadata/v?label=gradle.config&metadataUrl=https%3A%2F%2Fartifacts.metaborg.org%2Fcontent%2Frepositories%2Freleases%2Forg%2Fmetaborg%2Fgradle.config%2Fmaven-metadata.xml)](https://mvnrepository.com/artifact/org.metaborg/gradle.config?repo=metaborg-releases)
 
 
