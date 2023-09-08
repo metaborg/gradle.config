@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 
+## [0.5.1] - 2023-09-08
+- Small bug fix for switching branches.
+
+
 ## [0.5.0] - 2023-09-08
 - Add support for submodules (`myrepo.submodule=true`).
 - Add support for specifying individual repositories to work on (`--repo myrepo`).

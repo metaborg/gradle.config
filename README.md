@@ -51,8 +51,8 @@ Include the required plugins in the `build.gradle.kts` file's `plugins` block,
 like this:
 
     plugins {
-      id("org.metaborg.gradle.config.java-library") version("0.5.0")
-      id("org.metaborg.gradle.config.junit-testing") version("0.5.0")
+      id("org.metaborg.gradle.config.java-library") version("0.5.1")
+      id("org.metaborg.gradle.config.junit-testing") version("0.5.1")
     }
 
 The latest version of the plugin can be found at the top of this readme.
