@@ -41,20 +41,20 @@ enum class Transport {
   }
 }
 
-data class Repositories(
+data class RootRepository(
   val rootDirectory: File,
   val rootBranch: String,
   val urlPrefix: String,
   val repositories: Map<String, Repository>
 ) {
   companion object {
-    fun fromRootDirectory(rootDirectory: File): Repositories {
+    fun fromRootDirectory(rootDirectory: File): RootRepository {
       val repoConfigs = RepositoryConfigurations.fromRootDirectory(rootDirectory)
       val rootBranch = getCurrentGitBranch(rootDirectory)
       return fromRepoConfigs(rootDirectory, rootBranch, repoConfigs)
     }
 
-    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String, repositoryConfigurations: RepositoryConfigurations): Repositories {
+    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String, repositoryConfigurations: RepositoryConfigurations): RootRepository {
       val repos = repositoryConfigurations.configurations.mapValues { (name, repoConfig) ->
         val include = repoConfig.include
         val update = repoConfig.update
@@ -64,7 +64,7 @@ data class Repositories(
         val submodule = repoConfig.submodule
         Repository(name, include, update, directory, url, branch, submodule)
       }
-      return Repositories(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
+      return RootRepository(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
     }
   }
 }
@@ -151,11 +151,11 @@ class Repository(
   }
 
   fun submoduleStatus(rootProject: Project): String {
-    return execGitCmdInRoot(rootProject, "submodule", "status", "--", directory, captureOutput = true)!!
+    return execGitCmdInRoot(rootProject, "submodule", "status", "--", directory, printCommandLine = false, captureOutput = true)!!
   }
 
   fun submoduleInit(rootProject: Project) {
-    execGitCmdInRoot(rootProject, "submodule", "update", "--init", "--recursive", "--", directory)
+    execGitCmdInRoot(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory)
   }
 
   fun fetch(rootProject: Project) {
@@ -163,7 +163,7 @@ class Repository(
   }
 
   fun checkout(rootProject: Project) {
-    execGitCmd(rootProject, "checkout", "--quiet", branch)
+    execGitCmd(rootProject, "checkout", "--quiet", "--", branch)
   }
 
   fun pull(rootProject: Project) {
@@ -211,7 +211,7 @@ class Repository(
     // Ensure we are in detached HEAD mode
     execGitCmd(rootProject, "checkout", "--quiet", "--detach")
     // Force the branch to point to our detached HEAD
-    execGitCmd(rootProject, "branch", "--force", branch)
+    execGitCmd(rootProject, "branch", "--force", "--quiet", "--", branch)
     // Checkout the branch, reattaching the HEAD
     checkout(rootProject)
   }
