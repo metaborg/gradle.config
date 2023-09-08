@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+- Add support for submodules (`myrepo.submodule=true`).
+- Add support for specifying individual repositories to work on (`--repo myrepo`).
+- Fix errors when repositories are not checked out.
 
 
 ## [0.4.9] - 2023-09-05
