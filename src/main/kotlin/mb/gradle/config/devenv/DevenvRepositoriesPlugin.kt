@@ -29,9 +29,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<StatusRepositoryTask>("status") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Status for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Status for ${repo.fancyName}:")
           repo.status(project, short)
           println()
         }
@@ -40,11 +39,16 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("clone") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          if(repo.isCheckedOut(project.rootDir)) continue
-          println("Cloning repository $repo:")
-          repo.clone(project, transport)
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          if(repo.isCheckedOut(project)) continue
+          if (repo.submodule) {
+            println("Initializing ${repo.fancyName}:")
+            repo.submoduleInit(project)
+            repo.fixBranch(project)
+          } else {
+            println("Cloning ${repo.fancyName}:")
+            repo.clone(project, transport)
+          }
           repo.printCommit(project)
           println()
         }
@@ -53,9 +57,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("fetch") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Fetching for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Fetching for ${repo.fancyName}:")
           repo.fetch(project)
           println()
         }
@@ -64,9 +67,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("checkout") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Checking out ${repo.branch} for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Checking out ${repo.branch} for ${repo.fancyName}:")
           repo.checkout(project)
           repo.printCommit(project)
           println()
@@ -76,14 +78,19 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("update") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          if(!repo.isCheckedOut(project.rootDir)) {
-            println("Cloning repository $repo:")
-            repo.clone(project, transport)
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            if (repo.submodule) {
+              println("Initializing ${repo.fancyName}:")
+              repo.submoduleInit(project)
+              repo.fixBranch(project)
+            } else {
+              println("Cloning ${repo.fancyName}:")
+              repo.clone(project, transport)
+            }
             repo.printCommit(project)
           } else {
-            println("Updating repository $repo:")
+            println("Updating ${repo.fancyName}:")
             repo.fetch(project)
             repo.checkout(project)
             repo.pull(project)
@@ -96,9 +103,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("push") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing current branch for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Pushing current branch for ${repo.fancyName}:")
           repo.push(project)
           println()
         }
@@ -107,9 +113,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushTags") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing current branch and annotated tags for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Pushing current branch and annotated tags for ${repo.fancyName}:")
           repo.pushTags(project)
           println()
         }
@@ -118,9 +123,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushAll") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing all branches for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Pushing all branches for ${repo.fancyName}:")
           repo.pushAll(project)
           println()
         }
@@ -129,9 +133,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("pushAllTags") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Pushing all branches and annotated tags for repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Pushing all branches and annotated tags for ${repo.fancyName}:")
           repo.pushAllTags(project)
           println()
         }
@@ -140,9 +143,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<CleanRepositoryTask>("clean") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Cleaning repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Cleaning ${repo.fancyName}:")
           repo.clean(project, !force, removeIgnored)
           println()
         }
@@ -151,9 +153,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<ResetRepositoryTask>("reset") {
       doLast {
-        for(repo in repositories.repositories.values) {
-          if(!repo.update) continue
-          println("Resetting repository $repo:")
+        for(repo in repositories.repositories.values.filter { it.update }) {
+          println("Resetting ${repo.fancyName}:")
           repo.reset(project, hard)
           println()
         }
