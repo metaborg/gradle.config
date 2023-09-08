@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+
+## [0.5.0] - 2023-09-08
 - Add support for submodules (`myrepo.submodule=true`).
 - Add support for specifying individual repositories to work on (`--repo myrepo`).
 - Fix errors when repositories are not checked out.
@@ -31,7 +34,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.4.9...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.0...HEAD
+[0.5.0]: https://github.com/metaborg/gradle.config/compare/release-0.4.9...release-0.5.0
 [0.4.9]: https://github.com/metaborg/gradle.config/compare/release-0.4.8...release-0.4.9
 [0.4.8]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...release-0.4.8
 [0.4.7]: https://github.com/metaborg/gradle.config/compare/release-0.4.6...release-0.4.7
