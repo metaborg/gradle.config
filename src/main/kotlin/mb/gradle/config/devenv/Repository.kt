@@ -1,5 +1,6 @@
 package mb.gradle.config.devenv
 
+import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.process.ExecResult
 import java.io.ByteArrayOutputStream
@@ -43,7 +44,7 @@ enum class Transport {
 
 data class RootRepository(
   val rootDirectory: File,
-  val rootBranch: String,
+  val rootBranch: String?,
   val urlPrefix: String,
   val repositories: Map<String, Repository>
 ) {
@@ -54,7 +55,7 @@ data class RootRepository(
       return fromRepoConfigs(rootDirectory, rootBranch, repoConfigs)
     }
 
-    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String, repositoryConfigurations: RepositoryConfigurations): RootRepository {
+    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String?, repositoryConfigurations: RepositoryConfigurations): RootRepository {
       val repos = repositoryConfigurations.configurations.mapValues { (name, repoConfig) ->
         val include = repoConfig.include
         val update = repoConfig.update
@@ -75,7 +76,7 @@ class Repository(
   val update: Boolean,
   val directory: String,
   val url: String,
-  val branch: String,
+  val branch: String?,
   /** Whether the repository is a submodule. */
   val submodule: Boolean
 ) {
@@ -147,6 +148,7 @@ class Repository(
   }
 
   fun clone(rootProject: Project, transport: Transport) {
+    val branch = branch ?: throw GradleException("Cannot clone $fancyName, no branch is set and root repository is not on a branch.")
     execGitCmdInRoot(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory)
   }
 
@@ -158,11 +160,16 @@ class Repository(
     execGitCmdInRoot(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory)
   }
 
+  fun submoduleUpdate(rootProject: Project) {
+    execGitCmdInRoot(rootProject, "submodule", "update", "--recursive", "--quiet", "--", directory)
+  }
+
   fun fetch(rootProject: Project) {
     execGitCmd(rootProject, "fetch", "--quiet", "--recurse-submodules", "--all")
   }
 
   fun checkout(rootProject: Project) {
+    val branch = branch ?: throw GradleException("Cannot switch $fancyName, no branch is set and root repository is not on a branch.")
     execGitCmd(rootProject, "switch", "--quiet", "--", branch)
   }
 
@@ -195,6 +202,7 @@ class Repository(
   }
 
   fun reset(rootProject: Project, hard: Boolean) {
+    val branch = branch ?: throw GradleException("Cannot reset $fancyName, no branch is set and root repository is not on a branch.")
     execGitCmd(rootProject, "reset", branch, if(hard) "--hard" else "--mixed")
   }
 
@@ -208,6 +216,7 @@ class Repository(
    * and checking out the branch.
    */
   fun fixBranch(rootProject: Project) {
+    val branch = branch ?: throw GradleException("Cannot fix branch of $fancyName, no branch is set and root repository is not on a branch.")
     // Ensure we are in detached HEAD mode
     execGitCmd(rootProject, "checkout", "--quiet", "--detach")
     // Force the branch to point to our detached HEAD

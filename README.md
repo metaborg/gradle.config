@@ -46,35 +46,58 @@ For projects in the project hierarchy:
   Unused.
 
 
-## Usage
-Include the required plugins in the `build.gradle.kts` file's `plugins` block,
-like this:
+## Devenv Git Commands
+The `org.metaborg.gradle.config.devenv` plugin allows managing Git sub-repositories (which can be submodules
+or stand-alone repositories). The sub-repositories are defined in the `.properties` file associated with the
+build script. For example:
+
+```
+myrepo=true
+myrepo.update=true
+myrepo.branch=develop
+myrepo.submodule=true
+```
+
+For all sub-repository, the commands are available:
+
+- `list` - Lists the managed sub-repositories.
+- `status` - Prints the status.
+- `clone` - Clones those that have not been cloned yet.
+- `fetch` - Fetches the latest changes.
+- `checkout` - Checks out the correct branch.
+- `update` - Updates the branch to the latest changes.
+- `push` - Pushes the current local branch.
+- `pushTags` - Pushes the current local branch and all tags.
+- `pushAll` - Pushes all local branches.
+- `pushAllTags` - Pushes all local branches and all tags.
+- `clean` - Removes untracked files and directories.
+- `reset` - Resets to the current commit.
+
+
+## Applying
+Apply the required plugins in the `build.gradle.kts` file's `plugins` block, like this:
 
     plugins {
-      id("org.metaborg.gradle.config.java-library") version("0.5.1")
-      id("org.metaborg.gradle.config.junit-testing") version("0.5.1")
+      id("org.metaborg.gradle.config.java-library") version("0.5.2")
+      id("org.metaborg.gradle.config.junit-testing") version("0.5.2")
     }
 
 The latest version of the plugin can be found at the top of this readme.
 
 ## Development
-
 This section details the development of this project.
 
 ### Building
-
 This repository is built with Gradle, which requires a JDK of at least version 8 to be installed. Higher versions may work depending on [which version of Gradle is used](https://docs.gradle.org/current/userguide/compatibility.html).
 
 To build this repository, run `./gradlew buildAll` on Linux and macOS, or `gradlew buildAll` on Windows.
 
 ### Automated Builds
-
 All branches and tags of this repository are built on:
 - [GitHub actions](https://github.com/metaborg/gradle.config/actions/workflows/build.yml) via `.github/workflows/build.yml`.
 - Our [Jenkins buildfarm](https://buildfarm.metaborg.org/view/Devenv/job/metaborg/job/gradle.config/) via `Jenkinsfile` which uses our [Jenkins pipeline library](https://github.com/metaborg/jenkins.pipeline/).
 
 ### Publishing
-
 This repository is published via Gradle and Git with the [Gitonium](https://github.com/metaborg/gitonium) and [Gradle Config](https://github.com/metaborg/gradle.config) plugins.
 It is published to our [artifact server](https://artifacts.metaborg.org) in the [releases repository](https://artifacts.metaborg.org/content/repositories/releases/).
 
@@ -97,7 +120,6 @@ Then run `./gradlew publishAll` to publish all built artifacts.
 You should also push the release tag you made such that this release is reproducible by others.
 
 ## Copyright and License
-
 Copyright © 2018-2023 Delft University of Technology
 
 The files in this repository are licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).

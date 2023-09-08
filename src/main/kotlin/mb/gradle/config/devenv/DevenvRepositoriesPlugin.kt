@@ -19,21 +19,22 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     val rootRepository = RootRepository.fromRootDirectory(project.rootDir)
     project.tasks.register<RepositoryTask>("list") {
       doLast {
-        println("Git URL prefix: ${rootRepository.urlPrefix}")
-        println("Current branch: ${rootRepository.rootBranch}")
+        println("Root repository:")
+        println("  Git URL prefix: ${rootRepository.urlPrefix}")
+        println("  Current branch: ${rootRepository.rootBranch ?: "<unknown>"}")
         val allRepositories = rootRepository.repositories.values
         val repositories = allRepositories.filter { !it.submodule }
         if (repositories.isNotEmpty()) {
           println("Repositories:")
           for (repo in repositories) {
-            println(repo)
+            println("  ${repo.name} (${repo.branch ?: "<unknown>"})")
           }
         }
         val submodules = allRepositories.filter { it.submodule }
         if (submodules.isNotEmpty()) {
           println("Submodules:")
           for (repo in submodules) {
-            println(repo)
+            println("  ${repo.name} (${repo.branch ?: "<unknown>"})")
           }
         }
         if (repositories.isEmpty() && submodules.isEmpty()) {
@@ -102,13 +103,18 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Checking out ${repo.branch} for ${repo.fancyName}:")
-            repo.checkout(project)
+            if (repo.submodule) {
+              repo.submoduleUpdate(project)
+              repo.fixBranch(project)
+            } else {
+              repo.checkout(project)
+            }
             repo.printCommit(project)
           }
           println()
         }
       }
-      description = "For each repository (with update=true): checkout the correct branch."
+      description = "For each repository (with update=true): checkout the current commit on the correct branch."
     }
     project.tasks.register<RepositoryTask>("update") {
       doLast {
