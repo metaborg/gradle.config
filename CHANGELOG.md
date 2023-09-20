@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 
+## [0.5.3] - 2023-09-20
+- Print commit hashes where relevant (`./repo status`, `./repo list`).
+
+
 ## [0.5.2] - 2023-09-09
 - Support root repositories that are not on a branch.
 - Support checking out specific hashes of submodules (`./repo checkout`) after checking out a particular root commit

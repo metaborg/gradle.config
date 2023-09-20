@@ -78,8 +78,8 @@ For all sub-repository, the commands are available:
 Apply the required plugins in the `build.gradle.kts` file's `plugins` block, like this:
 
     plugins {
-      id("org.metaborg.gradle.config.java-library") version("0.5.2")
-      id("org.metaborg.gradle.config.junit-testing") version("0.5.2")
+      id("org.metaborg.gradle.config.java-library") version("0.5.3")
+      id("org.metaborg.gradle.config.junit-testing") version("0.5.3")
     }
 
 The latest version of the plugin can be found at the top of this readme.

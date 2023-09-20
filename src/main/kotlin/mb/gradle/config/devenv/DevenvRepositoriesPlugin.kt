@@ -34,7 +34,8 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
         if (submodules.isNotEmpty()) {
           println("Submodules:")
           for (repo in submodules) {
-            println("  ${repo.name} (${repo.branch ?: "<unknown>"})")
+            val commit = repo.getCommit(project)
+            println("  ${repo.name} (${repo.branch ?: "<unknown branch>"}, ${commit ?: "<unknown commit>"})")
           }
         }
         if (repositories.isEmpty() && submodules.isEmpty()) {
@@ -48,6 +49,7 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
         val selected = getSelectedRepositories(rootRepository, allowNotUpdated = true)
         for(repo in selected) {
           println("Status for ${repo.fancyName}:")
+          repo.printCommit(project)
           if (!repo.update) {
             println("Not updated ${repo.fancyName}")
           } else if(repo.isCheckedOut(project)) {

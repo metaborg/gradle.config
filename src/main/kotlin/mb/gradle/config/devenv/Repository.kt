@@ -3,6 +3,7 @@ package mb.gradle.config.devenv
 import org.gradle.api.GradleException
 import org.gradle.api.Project
 import org.gradle.process.ExecResult
+import org.gradle.process.internal.ExecException
 import java.io.ByteArrayOutputStream
 import java.io.File
 import java.io.OutputStream
@@ -96,31 +97,34 @@ class Repository(
    * @param args the arguments to the `git` command
    * @param printCommandLine whether to print the command line being executed
    * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
-   * @return the captured standard output; or `null` if [captureOutput] is `false`
+   * @param root whether to execute the command in the root directory instead of the subdirectory
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`
    */
-  fun execGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false): String? {
+  fun execGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false, root: Boolean = false): String {
     (if (captureOutput) ByteArrayOutputStream() else null).use { stream ->
-      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = false, standardOutput = stream)
+      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = root, standardOutput = stream)
+      result.rethrowFailure()
       result.assertNormalExitValue()
-      return stream?.let { stream.toString("UTF-8") }
+      return stream?.let { stream.toString("UTF-8") } ?: ""
     }
   }
 
   /**
-   * Executes the specified Git command in the root directory of the project, asserting that the command succeeded
-   * and optionally capturing the standard output.
+   * Attempts to execute the specified Git command in the subdirectory of the repository,
+   * optionally capturing the standard output.
    *
    * @param rootProject the Gradle project
    * @param args the arguments to the `git` command
    * @param printCommandLine whether to print the command line being executed
    * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
-   * @return the captured standard output; or `null` if [captureOutput] is `false`
+   * @param root whether to execute the command in the root directory instead of the subdirectory
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`; or `null` if the command failed
    */
-  fun execGitCmdInRoot(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false): String? {
-    (if (captureOutput) ByteArrayOutputStream() else null).use { stream ->
-      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = true, standardOutput = stream)
-      result.assertNormalExitValue()
-      return stream?.let { stream.toString("UTF-8") }
+  fun maybeExecGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false, root: Boolean = false): String? {
+    try {
+      return execGitCmd(rootProject, *args, printCommandLine = printCommandLine, captureOutput = captureOutput, root = root)
+    } catch (ex: ExecException) {
+      return null
     }
   }
 
@@ -132,7 +136,7 @@ class Repository(
     root: Boolean = false
   ): ExecResult {
     val dir = dir(rootProject.projectDir)
-    if (!root) check(dir.exists()) { "Cannot execute git command in directory $dir, directory does not exist" }
+    if (!root && !dir.exists()) return ExecResultImpl("git", -255, ExecException("Cannot execute git command in directory $dir, directory does not exist"))
     val result = rootProject.exec {
       this.executable = "git"
       if (!root) { this.workingDir = dir }
@@ -149,19 +153,19 @@ class Repository(
 
   fun clone(rootProject: Project, transport: Transport) {
     val branch = branch ?: throw GradleException("Cannot clone $fancyName, no branch is set and root repository is not on a branch.")
-    execGitCmdInRoot(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory)
+    execGitCmd(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory, root = true)
   }
 
   fun submoduleStatus(rootProject: Project): String {
-    return execGitCmdInRoot(rootProject, "submodule", "status", "--", directory, printCommandLine = false, captureOutput = true)!!
+    return execGitCmd(rootProject, "submodule", "status", "--", directory, printCommandLine = false, captureOutput = true, root = true).trim()
   }
 
   fun submoduleInit(rootProject: Project) {
-    execGitCmdInRoot(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory)
+    execGitCmd(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory, root = true)
   }
 
   fun submoduleUpdate(rootProject: Project) {
-    execGitCmdInRoot(rootProject, "submodule", "update", "--recursive", "--quiet", "--", directory)
+    execGitCmd(rootProject, "submodule", "update", "--recursive", "--quiet", "--", directory, root = true)
   }
 
   fun fetch(rootProject: Project) {
@@ -206,9 +210,14 @@ class Repository(
     execGitCmd(rootProject, "reset", branch, if(hard) "--hard" else "--mixed")
   }
 
-  /** Prints the current commit of this repository. */
+  /** Prints the current commit and log message of this repository. */
   fun printCommit(rootProject: Project) {
-    execGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false)
+    maybeExecGitCmd(rootProject, "log", "--decorate", "--oneline", "-1", printCommandLine = false)
+  }
+
+  /** Gets the current commit hash of this repository; or `null` if it could not be determined. */
+  fun getCommit(rootProject: Project): String? {
+    return maybeExecGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false, captureOutput = true)?.trim()
   }
 
   /**
@@ -231,4 +240,27 @@ class Repository(
     String.format("  %1\$-30s : include = %2\$-5s, update = %3\$-5s, submodule = %4\$-5s, branch = %5\$-20s, path = %6\$-30s, url = %7\$s", name, include, update, submodule, branch, directory, url)
 
   override fun toString() = name
+}
+
+
+private class ExecResultImpl(
+  private val displayName: String,
+  private val exitValue: Int,
+  private val failure: ExecException? = null
+) : ExecResult {
+  override fun getExitValue(): Int = exitValue
+
+  override fun assertNormalExitValue(): ExecResult {
+    if (exitValue != 0) throw ExecException("Process '$displayName' finished with non-zero exit value $exitValue")
+    return this
+  }
+
+  override fun rethrowFailure(): ExecResult {
+    if (failure != null) throw failure
+    return this
+  }
+
+  override fun toString(): String {
+    return "{exitValue=$exitValue, failure=$failure}"
+  }
 }
