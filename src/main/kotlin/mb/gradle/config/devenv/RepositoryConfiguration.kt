@@ -4,13 +4,23 @@ import org.gradle.api.GradleException
 import java.io.File
 import java.util.*
 
+/** The configuration of a Git repository. */
 data class RepositoryConfiguration(
+  /** The name of the repository, for debugging purposes. */
   val name: String,
+  /** Whether the repository is included in the build. */
   val include: Boolean,
+  /** Whether to modify the repository as part of this plugin's tasks. */
   val update: Boolean,
+  /** The directory of the repository, relative to the root directory. */
   val directory: String,
+  /** The URL of the repository to clone from. */
   val url: String? = null,
+  /** The branch of the repository to use; or `null` to use the root repository's branch. */
   val branch: String? = null,
+  /** The remote name, say `"origin"`; or `null` to use the repository's default (`checkout.defaultRemote`). */
+  val remote: String? = null,
+  /** Whether the repository is a submodule. */
   val submodule: Boolean = false
 )
 
@@ -54,6 +64,7 @@ data class RepositoryConfigurations(
         var directory: String? = null,
         var url: String? = null,
         var branch: String? = null,
+        var remote: String? = null,
         var submodule: Boolean? = null
       ) {
         fun toImmutable() = RepositoryConfiguration(
@@ -63,6 +74,7 @@ data class RepositoryConfigurations(
           directory ?: name,
           url,
           branch,
+          remote,
           submodule ?: false
         )
       }
@@ -95,6 +107,11 @@ data class RepositoryConfigurations(
             val name = k.substringBeforeLast('.')
             val config = configurations.getOrPut(name) { Configuration(name) }
             config.branch = v
+          }
+          k.endsWith(".remote") -> {
+            val name = k.substringBeforeLast('.')
+            val config = configurations.getOrPut(name) { Configuration(name) }
+            config.remote = v
           }
           k.endsWith(".submodule") -> {
             val name = k.substringBeforeLast('.')

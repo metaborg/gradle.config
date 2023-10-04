@@ -63,21 +63,31 @@ data class RootRepository(
         val directory = repoConfig.directory
         val url = repoConfig.url ?: "${repositoryConfigurations.urlPrefix}/$name.git"
         val branch = repoConfig.branch ?: rootBranch
+        val remote = repoConfig.remote
         val submodule = repoConfig.submodule
-        Repository(name, include, update, directory, url, branch, submodule)
+        Repository(name, include, update, directory, url, branch, remote, submodule)
       }
       return RootRepository(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
     }
   }
 }
 
-class Repository(
+/** A Git repository. */
+data class Repository(
+  /** The name of the repository, for debugging purposes. */
   val name: String,
+  /** Whether the repository is included in the build. */
   val include: Boolean,
+  /** Whether to modify the repository as part of this plugin's tasks. */
   val update: Boolean,
+  /** The directory of the repository, relative to the root directory. */
   val directory: String,
+  /** The URL of the repository to clone from. */
   val url: String,
+  /** The branch of the repository to use; or `null` to use the root repository's branch. */
   val branch: String?,
+  /** The remote name, say `"origin"`; or `null` to use the repository's default (`checkout.defaultRemote`). */
+  val remote: String?,
   /** Whether the repository is a submodule. */
   val submodule: Boolean
 ) {
@@ -220,24 +230,46 @@ class Repository(
     return maybeExecGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false, captureOutput = true)?.trim()
   }
 
+  /** Gets the default remote name of the repository; or `null` if it could not be determined. */
+  fun getDefaultRemote(rootProject: Project): String? {
+    return maybeExecGitCmd(rootProject, "config", "--get", "checkout.defaultRemote", printCommandLine = false, captureOutput = true)?.takeIf { it.isNotBlank() }?.trim()
+  }
+
+  /** Gets the name of the remote to use. Defaults to `"origin"` if it cannot be determined. */
+  fun getRemote(rootProject: Project): String {
+    return remote ?: getDefaultRemote(rootProject) ?: "origin"
+  }
+
   /**
    * Fixes the detached head on a submodule by moving the branch pointer to the current commit
    * and checking out the branch.
    */
   fun fixBranch(rootProject: Project) {
     val branch = branch ?: throw GradleException("Cannot fix branch of $fancyName, no branch is set and root repository is not on a branch.")
+    val remote = getRemote(rootProject)
     // Ensure we are in detached HEAD mode
     execGitCmd(rootProject, "checkout", "--quiet", "--detach")
     // Force the branch to point to our detached HEAD
-    execGitCmd(rootProject, "branch", "--force", "--quiet", "--", branch)
+    execGitCmd(rootProject, "branch", "--quiet", "--force", "--", branch)
+    // Fix the upstream remote of the branch
+    execGitCmd(rootProject, "branch", "--quiet", "--set-upstream-to=$remote/$branch", "--", branch)
     // Checkout the branch, reattaching the HEAD
     checkout(rootProject)
   }
 
   val fancyName: String get() = if (submodule) "submodule $name" else "repository $name"
 
-  fun info() =
-    String.format("  %1\$-30s : include = %2\$-5s, update = %3\$-5s, submodule = %4\$-5s, branch = %5\$-20s, path = %6\$-30s, url = %7\$s", name, include, update, submodule, branch, directory, url)
+  fun info() = String.format(
+    "  %1\$-30s : include = %2\$-5s, update = %3\$-5s, submodule = %4\$-5s, branch = %5\$-20s, remote = %6\$-20s, path = %7\$-30s, url = %8\$s",
+    name,
+    include,
+    update,
+    submodule,
+    branch,
+    remote,
+    directory,
+    url
+  )
 
   override fun toString() = name
 }

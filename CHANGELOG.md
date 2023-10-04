@@ -4,6 +4,8 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+- Fix upstream remote of repositories when checking out.
+- Add support for specifying the upstream origin (`myrepo.remote=upstream`).
 
 
 ## [0.5.3] - 2023-09-20
