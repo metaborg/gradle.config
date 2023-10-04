@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
+
+
+## [0.5.4] - 2023-10-04
 - Fix upstream remote of repositories when checking out.
 - Add support for specifying the upstream origin (`myrepo.remote=upstream`).
 
@@ -49,7 +52,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.0...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.4...HEAD
+[0.5.4]: https://github.com/metaborg/gradle.config/compare/release-0.5.3...release-0.5.4
+[0.5.3]: https://github.com/metaborg/gradle.config/compare/release-0.5.2...release-0.5.3
+[0.5.2]: https://github.com/metaborg/gradle.config/compare/release-0.5.1...release-0.5.2
+[0.5.1]: https://github.com/metaborg/gradle.config/compare/release-0.5.0...release-0.5.1
 [0.5.0]: https://github.com/metaborg/gradle.config/compare/release-0.4.9...release-0.5.0
 [0.4.9]: https://github.com/metaborg/gradle.config/compare/release-0.4.8...release-0.4.9
 [0.4.8]: https://github.com/metaborg/gradle.config/compare/release-0.4.7...release-0.4.8

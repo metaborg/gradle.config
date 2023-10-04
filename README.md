@@ -78,8 +78,8 @@ For all sub-repository, the commands are available:
 Apply the required plugins in the `build.gradle.kts` file's `plugins` block, like this:
 
     plugins {
-      id("org.metaborg.gradle.config.java-library") version("0.5.3")
-      id("org.metaborg.gradle.config.junit-testing") version("0.5.3")
+      id("org.metaborg.gradle.config.java-library") version("0.5.4")
+      id("org.metaborg.gradle.config.junit-testing") version("0.5.4")
     }
 
 The latest version of the plugin can be found at the top of this readme.
@@ -96,6 +96,13 @@ To build this repository, run `./gradlew buildAll` on Linux and macOS, or `gradl
 All branches and tags of this repository are built on:
 - [GitHub actions](https://github.com/metaborg/gradle.config/actions/workflows/build.yml) via `.github/workflows/build.yml`.
 - Our [Jenkins buildfarm](https://buildfarm.metaborg.org/view/Devenv/job/metaborg/job/gradle.config/) via `Jenkinsfile` which uses our [Jenkins pipeline library](https://github.com/metaborg/jenkins.pipeline/).
+
+### Usage
+To use the developed plugin as part of the build of another project, include this plugin's build using the `--include-build` argument on the command line of Gradle. For example:
+
+```shell
+./gradlew build --include-build ./gradle.config
+```
 
 ### Publishing
 This repository is published via Gradle and Git with the [Gitonium](https://github.com/metaborg/gitonium) and [Gradle Config](https://github.com/metaborg/gradle.config) plugins.
