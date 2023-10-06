@@ -58,20 +58,18 @@ myrepo.branch=develop
 myrepo.submodule=true
 ```
 
-For all sub-repository, the commands are available:
+For all sub-repositories, these commands are available: (Arguments: `--transport`, `--repo`)
 
 - `list` - Lists the managed sub-repositories.
-- `status` - Prints the status.
+- `status` - Prints the status. (Argument: `--short`)
 - `clone` - Clones those that have not been cloned yet.
 - `fetch` - Fetches the latest changes.
 - `checkout` - Checks out the correct branch.
 - `update` - Updates the branch to the latest changes.
-- `push` - Pushes the current local branch.
-- `pushTags` - Pushes the current local branch and all tags.
-- `pushAll` - Pushes all local branches.
-- `pushAllTags` - Pushes all local branches and all tags.
-- `clean` - Removes untracked files and directories.
-- `reset` - Resets to the current commit.
+- `push` - Pushes the current local branch. (Arguments: `--all`, `--follow-tags`)
+- `clean` - Removes untracked files and directories. (Arguments: `--force`, `--remove-ignored`)
+- `reset` - Resets to the current commit. (Arguments: `--hard`)
+- `commitSubmodules` - Creates a commit with the current commits of the submodules. (Arguments: `--message`)
 
 
 ## Applying
