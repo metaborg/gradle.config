@@ -316,6 +316,8 @@ data class Repository(
 
   val fancyName: String get() = if (submodule) "submodule $name" else "repository $name"
 
+  val typeStr: String get() = if (submodule) "submodule" else "repository"
+
   fun info() = String.format(
     "  %1\$-30s : include = %2\$-5s, update = %3\$-5s, submodule = %4\$-5s, branch = %5\$-20s, remote = %6\$-20s, path = %7\$-30s, url = %8\$s",
     name,
