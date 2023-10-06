@@ -171,11 +171,11 @@ data class Repository(
   }
 
   fun submoduleInit(rootProject: Project) {
-    execGitCmd(rootProject, "submodule", "update", "--init", "--recursive", "--quiet", "--", directory, root = true)
+    execGitCmd(rootProject, "submodule", "update", "--quiet", "--recursive", "--init", "--", directory, root = true)
   }
 
   fun submoduleUpdate(rootProject: Project) {
-    execGitCmd(rootProject, "submodule", "update", "--recursive", "--quiet", "--", directory, root = true)
+    execGitCmd(rootProject, "submodule", "update", "--quiet", "--recursive", "--", directory, root = true)
   }
 
   fun fetch(rootProject: Project) {

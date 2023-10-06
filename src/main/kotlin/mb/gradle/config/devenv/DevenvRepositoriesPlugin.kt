@@ -82,6 +82,33 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "For each repository (with update=true): clone the repository if it has not been cloned yet."
     }
+    project.tasks.register<RepositoryTask>("update") {
+      doLast {
+        val selected = getSelectedRepositories(rootRepository)
+        for(repo in selected.filter { it.update }) {
+          if(!repo.isCheckedOut(project)) {
+            if (repo.submodule) {
+              println("Initializing and updating ${repo.fancyName}:")
+              repo.submoduleInit(project)
+              repo.fixBranch(project)
+              repo.pull(project)
+            } else {
+              println("Cloning ${repo.fancyName}:")
+              repo.clone(project, transport)
+            }
+            repo.printCommit(project)
+          } else {
+            println("Updating ${repo.fancyName}:")
+            repo.fetch(project)
+            repo.checkout(project)
+            repo.pull(project)
+            repo.printCommit(project)
+          }
+          println()
+        }
+      }
+      description = "For each repository (with update=true): check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
+    }
     project.tasks.register<RepositoryTask>("fetch") {
       doLast {
         val selected = getSelectedRepositories(rootRepository)
