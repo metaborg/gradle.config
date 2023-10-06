@@ -187,6 +187,14 @@ data class Repository(
     execGitCmd(rootProject, "switch", "--quiet", "--", branch)
   }
 
+  fun addCommit(rootProject: Project) {
+    execGitCmd(rootProject, "add", "--quiet", "--", directory, root = true)
+  }
+
+  fun commitRoot(rootProject: Project, message: String) {
+    execGitCmd(rootProject, "commit", "--quiet", "--message", message, root = true)
+  }
+
   fun pull(rootProject: Project) {
     execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
   }

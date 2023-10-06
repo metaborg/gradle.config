@@ -5,6 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 - Fix `./repo update` not always updating subrepositories.
+- Add `./repo commit` to commit changes to the subrepositories (only when using submodules).
 
 
 ## [0.5.4] - 2023-10-04

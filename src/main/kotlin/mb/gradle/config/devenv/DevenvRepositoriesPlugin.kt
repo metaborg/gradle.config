@@ -145,31 +145,23 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "For each repository (with update=true): checkout the current commit on the correct branch."
     }
-    project.tasks.register<RepositoryTask>("update") {
+    project.tasks.register<RepositoryTask>("commit") {
       doLast {
         val selected = getSelectedRepositories(rootRepository)
         for(repo in selected.filter { it.update }) {
           if(!repo.isCheckedOut(project)) {
-            if (repo.submodule) {
-              println("Initializing ${repo.fancyName}:")
-              repo.submoduleInit(project)
-              repo.fixBranch(project)
-            } else {
-              println("Cloning ${repo.fancyName}:")
-              repo.clone(project, transport)
-            }
-            repo.printCommit(project)
+            println("Not cloned ${repo.fancyName}")
           } else {
-            println("Updating ${repo.fancyName}:")
-            repo.fetch(project)
-            repo.checkout(project)
-            repo.pull(project)
-            repo.printCommit(project)
+            println("Adding ${repo.fancyName}:")
+            repo.addCommit(project)
+            // TODO: git commit --quiet --message "Update submodule revisions"
+            // TODO: Skip if the commit is empty
+            // TODO: Allow specifying a custom message
           }
           println()
         }
       }
-      description = "For each repository (with update=true): check out the repository to the correct branch and pull from origin, or clone the repository if it has not been cloned yet."
+      description = "For each repository (with update=true): push the current local branch to the main remote."
     }
     project.tasks.register<RepositoryTask>("push") {
       doLast {
