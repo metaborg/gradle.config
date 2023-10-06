@@ -1,6 +1,6 @@
 plugins {
-  id("org.metaborg.gradle.config.root-project") version "0.4.8" // Bootstrap
-  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.4.8" // Bootstrap
+  id("org.metaborg.gradle.config.root-project") version "0.5.4"         // Bootstrap
+  id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.5.4" // Bootstrap
   id("org.metaborg.gitonium") version "0.1.5"
   kotlin("jvm") version "1.3.41" // Stick with 1.3.41: Gradle 5.6.4's kotlin-dsl plugin uses it.
   `kotlin-dsl`
@@ -12,12 +12,20 @@ metaborg {
   kotlinLanguageVersion = "1.3"
 }
 
+repositories {
+  mavenCentral()
+}
+
 dependencies {
   implementation("org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r")
 
   // Compile-only dependencies for Gradle plugins that we need to use types from, but should still be applied/provided by users.
   compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
   compileOnly("org.gradle.kotlin:plugins:1.3.2")
+
+  testImplementation("io.kotest:kotest-runner-junit5:4.2.0")
+  testImplementation("io.kotest:kotest-assertions-core:4.2.0")
+  testImplementation(gradleTestKit())
 }
 
 gradlePlugin {
@@ -75,4 +83,8 @@ gradlePlugin {
       implementationClass = "mb.gradle.config.devenv.DevenvRepositoriesPlugin"
     }
   }
+}
+
+tasks.withType<Test>().configureEach {
+  useJUnitPlatform()
 }
