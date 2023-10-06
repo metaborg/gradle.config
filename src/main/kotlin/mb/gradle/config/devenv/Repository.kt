@@ -2,19 +2,26 @@ package mb.gradle.config.devenv
 
 import org.gradle.api.GradleException
 import org.gradle.api.Project
-import org.gradle.process.ExecResult
-import org.gradle.process.internal.ExecException
-import java.io.ByteArrayOutputStream
 import java.io.File
-import java.io.OutputStream
 import java.util.regex.Pattern
 
+/** Specifies a Git transport mode. */
 enum class Transport {
-  SSH, HTTPS;
+  /** Use the SSH protocol. */
+  SSH,
+  /** Use the HTTPS protocol. */
+  HTTPS,
+  ;
 
   private val httpsPattern = Pattern.compile("https?://([\\w.@:\\-~]+)/(.+)")
   private val sshPattern = Pattern.compile("(?:ssh://)?([\\w.@\\-~]+)@([\\w.@\\-~]+)[:/](.+)")
 
+  /**
+   * Changes the specified Git repository URL to use this transport protocol.
+   *
+   * @param url the URL to change
+   * @return the changed url
+   */
   fun convert(url: String): String {
     val httpsMatch = httpsPattern.matcher(url)
     val sshMatch = sshPattern.matcher(url)
@@ -32,9 +39,7 @@ enum class Transport {
         host = sshMatch.group(2)
         path = sshMatch.group(3)
       }
-      else -> {
-        throw RuntimeException("Cannot convert URL '$url' to '$this' format; unknown URL format")
-      }
+      else -> error("Cannot convert URL '$url' to '$this' format; unknown URL format.")
     }
     return when(this) {
       SSH -> "$user@$host:$path"
@@ -43,20 +48,43 @@ enum class Transport {
   }
 }
 
+/** A Git root repository. */
 data class RootRepository(
+  /** The directory of the repository. */
   val rootDirectory: File,
+  /** The branch of the repository to use; or `null` to not specify. */
   val rootBranch: String?,
+  /** The URL prefix to use. */
   val urlPrefix: String,
+  /** A map of names to sub repositories. */
   val repositories: Map<String, Repository>
 ) {
   companion object {
+    /**
+     * Represents the specified root directory as a root repository.
+     *
+     * @param rootDirectory the root directory
+     * @return the root repository
+     */
     fun fromRootDirectory(rootDirectory: File): RootRepository {
       val repoConfigs = RepositoryConfigurations.fromRootDirectory(rootDirectory)
-      val rootBranch = getCurrentGitBranch(rootDirectory)
+      val rootBranch = Git.getCurrentBranch(rootDirectory)
       return fromRepoConfigs(rootDirectory, rootBranch, repoConfigs)
     }
 
-    private fun fromRepoConfigs(rootDirectory: File, rootBranch: String?, repositoryConfigurations: RepositoryConfigurations): RootRepository {
+    /**
+     * Represents the specified root directory, branch, and sub repository configurations
+     * as a root repository.
+     *
+     * @param rootDirectory the root directory
+     * @param rootBranch the branch of the root repository
+     * @param repositoryConfigurations the sub repository configurations
+     */
+    private fun fromRepoConfigs(
+      rootDirectory: File,
+      rootBranch: String?,
+      repositoryConfigurations: RepositoryConfigurations
+    ): RootRepository {
       val repos = repositoryConfigurations.configurations.mapValues { (name, repoConfig) ->
         val include = repoConfig.include
         val update = repoConfig.update
@@ -70,9 +98,101 @@ data class RootRepository(
       return RootRepository(rootDirectory, rootBranch, repositoryConfigurations.urlPrefix, repos)
     }
   }
+
+  /**
+   * Determines if the repository is present and (in case of a submodule) initialized.
+   *
+   * @return `true` if the repository is checked-out and initialized;
+   * otherwise, `false`
+   */
+  fun isCheckedOut(rootProject: Project, repo: Repository): Boolean =
+    repo.repoDir(rootProject).exists() && if (repo.submodule) !submoduleStatus(rootProject, repo).startsWith("-") else true
+
+  fun add(rootProject: Project, repo: Repository) {
+    rootProject.gitExec("add", "--", repo.directory)
+  }
+
+  fun commit(rootProject: Project, message: String) {
+    rootProject.gitExec("commit", "--quiet", "--message", message)
+  }
+
+  fun submoduleInit(rootProject: Project, repo: Repository) {
+    rootProject.gitExec("submodule", "update", "--quiet", "--recursive", "--init", "--", repo.directory)
+  }
+
+  fun submoduleUpdate(rootProject: Project, repo: Repository) {
+    rootProject.gitExec("submodule", "update", "--quiet", "--recursive", "--", repo.directory)
+  }
+
+  fun clone(rootProject: Project, repo: Repository, transport: Transport) {
+    val branch = repo.branch
+      ?: throw GradleException("Cannot clone ${repo.fancyName}, no branch is set and root repository is not on a branch.")
+    rootProject.gitExec(
+      "clone",
+      "--quiet",
+      "--recurse-submodules",
+      "--branch",
+      branch,
+      transport.convert(repo.url),
+      repo.directory
+    )
+  }
+
+  fun submoduleStatus(rootProject: Project, repo: Repository): String {
+    return rootProject.gitExec(
+      "submodule",
+      "status",
+      "--",
+      repo.directory,
+      printCommandLine = false,
+      captureOutput = true
+    ).trim()
+  }
+
+  /**
+   * Attempts to execute the specified Git command in the root directory,
+   * optionally capturing the standard output.
+   *
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`; or `null` if the command failed
+   */
+  private fun Project.gitMaybeExec(
+    vararg args: String,
+    printCommandLine: Boolean = true,
+    captureOutput: Boolean = false
+  ): String? = Git.maybeExec(
+    this,
+    null,
+    *args,
+    printCommandLine = printCommandLine,
+    captureOutput = captureOutput
+  )
+
+  /**
+   * Executes the specified Git command in the root directory, asserting that the command succeeded
+   * and optionally capturing the standard output.
+   *
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`
+   */
+  private fun Project.gitExec(
+    vararg args: String,
+    printCommandLine: Boolean = true,
+    captureOutput: Boolean = false
+  ): String = Git.exec(
+    this,
+    null,
+    *args,
+    printCommandLine = printCommandLine,
+    captureOutput = captureOutput
+  )
 }
 
-/** A Git repository. */
+/** A Git sub repository. */
 data class Repository(
   /** The name of the repository, for debugging purposes. */
   val name: String,
@@ -91,156 +211,84 @@ data class Repository(
   /** Whether the repository is a submodule. */
   val submodule: Boolean
 ) {
-  private fun dir(rootDir: File): File = rootDir.resolve(directory)
 
-  /**
-   * Determines if the repository is present and (in case of a submodule) initialized
-   */
-  fun isCheckedOut(rootProject: Project): Boolean =
-     dir(rootProject.rootDir).exists() && if (submodule) !submoduleStatus(rootProject).startsWith("-") else true
+  fun repoDir(rootProject: Project): File = rootProject.projectDir.resolve(directory)
 
-  /**
-   * Executes the specified Git command in the subdirectory of the repository, asserting that the command succeeded
-   * and optionally capturing the standard output.
-   *
-   * @param rootProject the Gradle project
-   * @param args the arguments to the `git` command
-   * @param printCommandLine whether to print the command line being executed
-   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
-   * @param root whether to execute the command in the root directory instead of the subdirectory
-   * @return the captured standard output; or an empty string if [captureOutput] is `false`
-   */
-  fun execGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false, root: Boolean = false): String {
-    (if (captureOutput) ByteArrayOutputStream() else null).use { stream ->
-      val result = internalExecGitCmd(rootProject, mutableListOf(*args), printCommandLine, root = root, standardOutput = stream)
-      result.rethrowFailure()
-      result.assertNormalExitValue()
-      return stream?.let { stream.toString("UTF-8") } ?: ""
-    }
-  }
-
-  /**
-   * Attempts to execute the specified Git command in the subdirectory of the repository,
-   * optionally capturing the standard output.
-   *
-   * @param rootProject the Gradle project
-   * @param args the arguments to the `git` command
-   * @param printCommandLine whether to print the command line being executed
-   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
-   * @param root whether to execute the command in the root directory instead of the subdirectory
-   * @return the captured standard output; or an empty string if [captureOutput] is `false`; or `null` if the command failed
-   */
-  fun maybeExecGitCmd(rootProject: Project, vararg args: String, printCommandLine: Boolean = true, captureOutput: Boolean = false, root: Boolean = false): String? {
-    try {
-      return execGitCmd(rootProject, *args, printCommandLine = printCommandLine, captureOutput = captureOutput, root = root)
-    } catch (ex: ExecException) {
-      return null
-    }
-  }
-
-  private fun internalExecGitCmd(
-    rootProject: Project,
-    args: MutableList<String>,
-    printCommandLine: Boolean = true,
-    standardOutput: OutputStream? = null,
-    root: Boolean = false
-  ): ExecResult {
-    val dir = dir(rootProject.projectDir)
-    if (!root && !dir.exists()) return ExecResultImpl("git", -255, ExecException("Cannot execute git command in directory $dir, directory does not exist"))
-    val result = rootProject.exec {
-      this.executable = "git"
-      if (!root) { this.workingDir = dir }
-      this.args = args.filterNot { it.isBlank() }
-      standardOutput?.let { this.standardOutput = it }
-      if(printCommandLine) println(commandLine.joinToString(separator = " "))
-    }
-    return result
-  }
 
   fun status(rootProject: Project, short: Boolean = false) {
-    execGitCmd(rootProject, "-c", "color.status=always", "status", "--branch", if(short) "--short" else "", printCommandLine = false)
-  }
-
-  fun clone(rootProject: Project, transport: Transport) {
-    val branch = branch ?: throw GradleException("Cannot clone $fancyName, no branch is set and root repository is not on a branch.")
-    execGitCmd(rootProject, "clone", "--quiet", "--recurse-submodules", "--branch", branch, transport.convert(url), directory, root = true)
-  }
-
-  fun submoduleStatus(rootProject: Project): String {
-    return execGitCmd(rootProject, "submodule", "status", "--", directory, printCommandLine = false, captureOutput = true, root = true).trim()
-  }
-
-  fun submoduleInit(rootProject: Project) {
-    execGitCmd(rootProject, "submodule", "update", "--quiet", "--recursive", "--init", "--", directory, root = true)
-  }
-
-  fun submoduleUpdate(rootProject: Project) {
-    execGitCmd(rootProject, "submodule", "update", "--quiet", "--recursive", "--", directory, root = true)
+    rootProject.gitExec(
+      "-c",
+      "color.status=always",
+      "status",
+      "--branch",
+      if (short) "--short" else "",
+      printCommandLine = false
+    )
   }
 
   fun fetch(rootProject: Project) {
-    execGitCmd(rootProject, "fetch", "--quiet", "--recurse-submodules", "--all")
+    rootProject.gitExec("fetch", "--quiet", "--recurse-submodules", "--all")
   }
 
   fun checkout(rootProject: Project) {
-    val branch = branch ?: throw GradleException("Cannot switch $fancyName, no branch is set and root repository is not on a branch.")
-    execGitCmd(rootProject, "switch", "--quiet", "--", branch)
-  }
-
-  fun addCommit(rootProject: Project) {
-    execGitCmd(rootProject, "add", "--quiet", "--", directory, root = true)
-  }
-
-  fun commitRoot(rootProject: Project, message: String) {
-    execGitCmd(rootProject, "commit", "--quiet", "--message", message, root = true)
+    val branch = branch
+      ?: throw GradleException("Cannot switch $fancyName, no branch is set and root repository is not on a branch.")
+    rootProject.gitExec("switch", "--quiet", "--", branch)
   }
 
   fun pull(rootProject: Project) {
-    execGitCmd(rootProject, "pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
+    rootProject.gitExec("pull", "--quiet", "--recurse-submodules", "--rebase", "--autostash")
   }
 
-  fun push(rootProject: Project) {
-    execGitCmd(rootProject, "push")
-  }
-
-  fun pushTags(rootProject: Project) {
-    execGitCmd(rootProject, "push", "--follow-tags")
-  }
-
-  fun pushAll(rootProject: Project) {
-    execGitCmd(rootProject, "push", "--all")
-  }
-
-  fun pushAllTags(rootProject: Project) {
-    execGitCmd(rootProject, "push", "--all", "--follow-tags")
+  fun push(rootProject: Project, all: Boolean = false, followTags: Boolean = false) {
+    rootProject.gitExec(
+      "push",
+      if (all) "--all" else "",
+      if (followTags) "--follow-tags" else ""
+    )
   }
 
   fun clean(rootProject: Project, dryRun: Boolean, removeIgnored: Boolean = false) {
     // -X: remove untracked files
     // -x: remove untracked and ignored untracked files
     // -d: remove untracked directories
-    execGitCmd(rootProject, "clean", "--force", if(removeIgnored) "-x" else "-X", "-d",
-      if(dryRun) "--dry-run" else "")
+    rootProject.gitExec(
+      "clean", "--force", if (removeIgnored) "-x" else "-X", "-d",
+      if (dryRun) "--dry-run" else ""
+    )
   }
 
   fun reset(rootProject: Project, hard: Boolean) {
-    val branch = branch ?: throw GradleException("Cannot reset $fancyName, no branch is set and root repository is not on a branch.")
-    execGitCmd(rootProject, "reset", branch, if(hard) "--hard" else "--mixed")
+    val branch = branch
+      ?: throw GradleException("Cannot reset $fancyName, no branch is set and root repository is not on a branch.")
+    rootProject.gitExec("reset", branch, if (hard) "--hard" else "--mixed")
   }
 
   /** Prints the current commit and log message of this repository. */
   fun printCommit(rootProject: Project) {
-    maybeExecGitCmd(rootProject, "log", "--decorate", "--oneline", "-1", printCommandLine = false)
+    rootProject.gitMaybeExec("log", "--decorate", "--oneline", "-1", printCommandLine = false)
   }
 
   /** Gets the current commit hash of this repository; or `null` if it could not be determined. */
   fun getCommit(rootProject: Project): String? {
-    return maybeExecGitCmd(rootProject, "rev-parse", "--verify", "HEAD", printCommandLine = false, captureOutput = true)?.trim()
+    return rootProject.gitMaybeExec(
+      "rev-parse",
+      "--verify",
+      "HEAD",
+      printCommandLine = false,
+      captureOutput = true
+    )?.trim()
   }
 
   /** Gets the default remote name of the repository; or `null` if it could not be determined. */
   fun getDefaultRemote(rootProject: Project): String? {
-    return maybeExecGitCmd(rootProject, "config", "--get", "checkout.defaultRemote", printCommandLine = false, captureOutput = true)?.takeIf { it.isNotBlank() }?.trim()
+    return rootProject.gitMaybeExec(
+      "config",
+      "--get",
+      "checkout.defaultRemote",
+      printCommandLine = false,
+      captureOutput = true
+    )?.takeIf { it.isNotBlank() }?.trim()
   }
 
   /** Gets the name of the remote to use. Defaults to `"origin"` if it cannot be determined. */
@@ -253,14 +301,15 @@ data class Repository(
    * and checking out the branch.
    */
   fun fixBranch(rootProject: Project) {
-    val branch = branch ?: throw GradleException("Cannot fix branch of $fancyName, no branch is set and root repository is not on a branch.")
+    val branch = branch
+      ?: throw GradleException("Cannot fix branch of $fancyName, no branch is set and root repository is not on a branch.")
     val remote = getRemote(rootProject)
     // Ensure we are in detached HEAD mode
-    execGitCmd(rootProject, "checkout", "--quiet", "--detach")
+    rootProject.gitExec("checkout", "--quiet", "--detach")
     // Force the branch to point to our detached HEAD
-    execGitCmd(rootProject, "branch", "--quiet", "--force", "--", branch)
+    rootProject.gitExec("branch", "--quiet", "--force", "--", branch)
     // Fix the upstream remote of the branch
-    execGitCmd(rootProject, "branch", "--quiet", "--set-upstream-to=$remote/$branch", "--", branch)
+    rootProject.gitExec("branch", "--quiet", "--set-upstream-to=$remote/$branch", "--", branch)
     // Checkout the branch, reattaching the HEAD
     checkout(rootProject)
   }
@@ -280,27 +329,48 @@ data class Repository(
   )
 
   override fun toString() = name
+
+
+  /**
+   * Attempts to execute the specified Git command in the subdirectory of the repository,
+   * optionally capturing the standard output.
+   *
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`; or `null` if the command failed
+   */
+  private fun Project.gitMaybeExec(
+    vararg args: String,
+    printCommandLine: Boolean = true,
+    captureOutput: Boolean = false
+  ): String? = Git.maybeExec(
+    this,
+    repoDir(this),
+    *args,
+    printCommandLine = printCommandLine,
+    captureOutput = captureOutput
+  )
+
+  /**
+   * Executes the specified Git command in the subdirectory of the repository, asserting that the command succeeded
+   * and optionally capturing the standard output.
+   *
+   * @param args the arguments to the `git` command
+   * @param printCommandLine whether to print the command line being executed
+   * @param captureOutput `true` to capture the standard output; otherwise, `false` to print it to `System.out`
+   * @return the captured standard output; or an empty string if [captureOutput] is `false`
+   */
+  private fun Project.gitExec(
+    vararg args: String,
+    printCommandLine: Boolean = true,
+    captureOutput: Boolean = false
+  ): String = Git.exec(
+    this,
+    repoDir(this),
+    *args,
+    printCommandLine = printCommandLine,
+    captureOutput = captureOutput
+  )
 }
 
-
-private class ExecResultImpl(
-  private val displayName: String,
-  private val exitValue: Int,
-  private val failure: ExecException? = null
-) : ExecResult {
-  override fun getExitValue(): Int = exitValue
-
-  override fun assertNormalExitValue(): ExecResult {
-    if (exitValue != 0) throw ExecException("Process '$displayName' finished with non-zero exit value $exitValue")
-    return this
-  }
-
-  override fun rethrowFailure(): ExecResult {
-    if (failure != null) throw failure
-    return this
-  }
-
-  override fun toString(): String {
-    return "{exitValue=$exitValue, failure=$failure}"
-  }
-}

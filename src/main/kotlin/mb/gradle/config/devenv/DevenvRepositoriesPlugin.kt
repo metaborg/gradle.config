@@ -16,13 +16,13 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
   }
 
   private fun configure(project: Project) {
-    val rootRepository = RootRepository.fromRootDirectory(project.rootDir)
+    val rootRepo = RootRepository.fromRootDirectory(project.rootDir)
     project.tasks.register<RepositoryTask>("list") {
       doLast {
         println("Root repository:")
-        println("  Git URL prefix: ${rootRepository.urlPrefix}")
-        println("  Current branch: ${rootRepository.rootBranch ?: "<unknown>"}")
-        val allRepositories = rootRepository.repositories.values
+        println("  Git URL prefix: ${rootRepo.urlPrefix}")
+        println("  Current branch: ${rootRepo.rootBranch ?: "<unknown>"}")
+        val allRepositories = rootRepo.repositories.values
         val repositories = allRepositories.filter { !it.submodule }
         if (repositories.isNotEmpty()) {
           println("Repositories:")
@@ -46,13 +46,13 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<StatusRepositoryTask>("status") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository, allowNotUpdated = true)
+        val selected = getSelectedRepositories(rootRepo, allowNotUpdated = true)
         for(repo in selected) {
           println("Status for ${repo.fancyName}:")
           repo.printCommit(project)
           if (!repo.update) {
             println("Not updated ${repo.fancyName}")
-          } else if(repo.isCheckedOut(project)) {
+          } else if(rootRepo.isCheckedOut(project, repo)) {
             repo.status(project, short)
           } else {
             println("Not cloned ${repo.fancyName}")
@@ -64,17 +64,17 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("clone") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(repo.isCheckedOut(project)) {
+          if(rootRepo.isCheckedOut(project, repo)) {
             println("Already cloned ${repo.fancyName}.")
           } else if (repo.submodule) {
             println("Initializing ${repo.fancyName}:")
-            repo.submoduleInit(project)
+            rootRepo.submoduleInit(project, repo)
             repo.fixBranch(project)
           } else {
             println("Cloning ${repo.fancyName}:")
-            repo.clone(project, transport)
+            rootRepo.clone(project, repo, transport)
           }
           repo.printCommit(project)
           println()
@@ -84,17 +84,17 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("update") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             if (repo.submodule) {
               println("Initializing and updating ${repo.fancyName}:")
-              repo.submoduleInit(project)
+              rootRepo.submoduleInit(project, repo)
               repo.fixBranch(project)
               repo.pull(project)
             } else {
               println("Cloning ${repo.fancyName}:")
-              repo.clone(project, transport)
+              rootRepo.clone(project, repo, transport)
             }
             repo.printCommit(project)
           } else {
@@ -111,9 +111,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("fetch") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Fetching for ${repo.fancyName}:")
@@ -126,14 +126,14 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<RepositoryTask>("checkout") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Checking out ${repo.branch} for ${repo.fancyName}:")
             if (repo.submodule) {
-              repo.submoduleUpdate(project)
+              rootRepo.submoduleUpdate(project, repo)
               repo.fixBranch(project)
             } else {
               repo.checkout(project)
@@ -145,89 +145,46 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
       }
       description = "For each repository (with update=true): checkout the current commit on the correct branch."
     }
-    project.tasks.register<RepositoryTask>("commit") {
+    project.tasks.register<CommitSubmodulesTask>("commitSubmodules") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
+          } else if (!repo.submodule) {
+            println("Not a submodule ${repo.fancyName}")
           } else {
             println("Adding ${repo.fancyName}:")
-            repo.addCommit(project)
-            // TODO: git commit --quiet --message "Update submodule revisions"
-            // TODO: Skip if the commit is empty
-            // TODO: Allow specifying a custom message
+            rootRepo.add(project, repo)
           }
           println()
         }
+        rootRepo.commit(project, message) // Gets skipped if the commit is empty
+        println("Created commit")
+        println()
       }
-      description = "For each repository (with update=true): push the current local branch to the main remote."
+      description = "Create a commit with the current commit of each repository (with update=true)."
     }
-    project.tasks.register<RepositoryTask>("push") {
+    project.tasks.register<PushRepositoryTask>("push") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Pushing current branch for ${repo.fancyName}:")
-            repo.push(project)
+            repo.push(project, all, followTags)
           }
           println()
         }
       }
       description = "For each repository (with update=true): push the current local branch to the main remote."
     }
-    project.tasks.register<RepositoryTask>("pushTags") {
-      doLast {
-        val selected = getSelectedRepositories(rootRepository)
-        for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
-            println("Not cloned ${repo.fancyName}")
-          } else {
-            println("Pushing current branch and annotated tags for ${repo.fancyName}:")
-            repo.pushTags(project)
-          }
-          println()
-        }
-      }
-      description = "For each repository (with update=true): push the current local branch and annotated tags to the main remote."
-    }
-    project.tasks.register<RepositoryTask>("pushAll") {
-      doLast {
-        val selected = getSelectedRepositories(rootRepository)
-        for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
-            println("Not cloned ${repo.fancyName}")
-          } else {
-            println("Pushing all branches for ${repo.fancyName}:")
-            repo.pushAll(project)
-          }
-          println()
-        }
-      }
-      description = "For each repository (with update=true): push all local branches to the main remote."
-    }
-    project.tasks.register<RepositoryTask>("pushAllTags") {
-      doLast {
-        val selected = getSelectedRepositories(rootRepository)
-        for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
-            println("Not cloned ${repo.fancyName}")
-          } else {
-            println("Pushing all branches and annotated tags for ${repo.fancyName}:")
-            repo.pushAllTags(project)
-          }
-          println()
-        }
-      }
-      description = "For each repository (with update=true): push all local branches and annotated tags to the main remote."
-    }
     project.tasks.register<CleanRepositoryTask>("clean") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Cleaning ${repo.fancyName}:")
@@ -240,9 +197,9 @@ class DevenvRepositoriesPlugin : Plugin<Project> {
     }
     project.tasks.register<ResetRepositoryTask>("reset") {
       doLast {
-        val selected = getSelectedRepositories(rootRepository)
+        val selected = getSelectedRepositories(rootRepo)
         for(repo in selected.filter { it.update }) {
-          if(!repo.isCheckedOut(project)) {
+          if(!rootRepo.isCheckedOut(project, repo)) {
             println("Not cloned ${repo.fancyName}")
           } else {
             println("Resetting ${repo.fancyName}:")
@@ -290,6 +247,12 @@ open class RepositoryTask : DefaultTask() {
   }
 }
 
+open class CommitSubmodulesTask : RepositoryTask() {
+  @Input
+  @Option(option = "message", description = "Provide a commit message.")
+  var message: String = "Update submodule revisions"
+}
+
 open class CleanRepositoryTask : RepositoryTask() {
   @Input
   @Option(option = "force", description = "Performs the clean without a dry-run.")
@@ -298,6 +261,16 @@ open class CleanRepositoryTask : RepositoryTask() {
   @Input
   @Option(option = "removeIgnored", description = "Also remove ignored untracked files.")
   var removeIgnored: Boolean = false
+}
+
+open class PushRepositoryTask : RepositoryTask() {
+  @Input
+  @Option(option = "all", description = "Push all branches.")
+  var all: Boolean = false
+
+  @Input
+  @Option(option = "follow-tags", description = "Push all tags.")
+  var followTags: Boolean = false
 }
 
 open class ResetRepositoryTask : RepositoryTask() {
