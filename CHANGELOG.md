@@ -4,8 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
-- Fix `./repo update` not always updating subrepositories.
-- Add `./repo commit` to commit changes to the subrepositories (only when using submodules).
+
+
+## [0.5.5] - 2023-10-06
+- Fix `./repo update` not always updating sub repositories.
+- Add `./repo commitSubmodules` command to commit latest commits of the submodules.
 
 
 ## [0.5.4] - 2023-10-04
@@ -54,7 +57,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.4...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.5...HEAD
+[0.5.5]: https://github.com/metaborg/gradle.config/compare/release-0.5.4...release-0.5.5
 [0.5.4]: https://github.com/metaborg/gradle.config/compare/release-0.5.3...release-0.5.4
 [0.5.3]: https://github.com/metaborg/gradle.config/compare/release-0.5.2...release-0.5.3
 [0.5.2]: https://github.com/metaborg/gradle.config/compare/release-0.5.1...release-0.5.2
