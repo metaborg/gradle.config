@@ -57,7 +57,6 @@ fun Project.configureKotlinGradlePlugin() {
     configureKotlinCompiler()
     val extension = extensions.getByType<MetaborgExtension>()
     extensions.configure<KotlinDslPluginOptions> {
-      experimentalWarning.set(false)
       jvmTarget.set(when(extension.javaVersion) {
         JavaVersion.VERSION_1_6 -> "1.6"
         JavaVersion.VERSION_1_8 -> "1.8"
