@@ -4,6 +4,8 @@ name: Build
 on:  # yamllint disable-line rule:truthy
   push:
     branches: [develop,master,main]
+    tags:
+      - "release-*.*.*"
   pull_request:
     branches: [develop,master,main]
 
