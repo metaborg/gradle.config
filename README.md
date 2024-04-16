@@ -125,7 +125,7 @@ Then run `./gradlew publishAll` to publish all built artifacts.
 You should also push the release tag you made such that this release is reproducible by others.
 
 ## Copyright and License
-Copyright © 2018-2023 Delft University of Technology
+Copyright © 2018-2024 Delft University of Technology
 
 The files in this repository are licensed under the [Apache License, Version 2.0](https://www.apache.org/licenses/LICENSE-2.0).
 You may use the files in this repository in compliance with the license.
