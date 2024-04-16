@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 
+## [0.5.6] - 2024-04-16
+- Allow duplicate resources when building Jars.
+
+
 ## [0.5.5] - 2023-10-06
 - Fix `./repo update` not always updating sub repositories.
 - Add `./repo commitSubmodules` command to commit latest commits of the submodules.
@@ -57,7 +61,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.5...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.6...HEAD
+[0.5.6]: https://github.com/metaborg/gradle.config/compare/release-0.5.5...release-0.5.6
 [0.5.5]: https://github.com/metaborg/gradle.config/compare/release-0.5.4...release-0.5.5
 [0.5.4]: https://github.com/metaborg/gradle.config/compare/release-0.5.3...release-0.5.4
 [0.5.3]: https://github.com/metaborg/gradle.config/compare/release-0.5.2...release-0.5.3
