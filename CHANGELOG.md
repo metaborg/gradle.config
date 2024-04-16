@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 
+## [0.5.7] - 2024-04-16
+- No changes.
+
+
 ## [0.5.6] - 2024-04-16
 - Allow duplicate resources when building Jars.
 
@@ -61,7 +65,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.6...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.5.7...HEAD
+[0.5.7]: https://github.com/metaborg/gradle.config/compare/release-0.5.6...release-0.5.7
 [0.5.6]: https://github.com/metaborg/gradle.config/compare/release-0.5.5...release-0.5.6
 [0.5.5]: https://github.com/metaborg/gradle.config/compare/release-0.5.4...release-0.5.5
 [0.5.4]: https://github.com/metaborg/gradle.config/compare/release-0.5.3...release-0.5.4
