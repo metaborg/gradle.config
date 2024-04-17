@@ -3,11 +3,15 @@ name: Build
 
 on:  # yamllint disable-line rule:truthy
   push:
-    branches: [develop,master,main]
+    branches:
+      - master
+      - develop
     tags:
       - "release-*.*.*"
   pull_request:
-    branches: [develop,master,main]
+    branches:
+      - master
+      - develop
 
 jobs:
   build:
