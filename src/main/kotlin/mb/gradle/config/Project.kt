@@ -39,7 +39,6 @@ fun Project.configureAnyProject() {
     }
     // Configure afterEvaluate, because...
     afterEvaluate {
-        configureWrapper() // it uses a property from the metaborg extension, which may be modified by the user.
         configurePublishingRepositories() // it uses the version, which the Gitonium plugin may set later.
     }
 }
@@ -150,25 +149,6 @@ private fun TaskContainerScope.createCompositeBuildTask(
                     project.logger.warn("Composite build task '$allName' does not include $it because it does not have a task named '$allName'")
                 }
             })
-        }
-    }
-}
-
-private fun Project.configureWrapper() {
-    val extension = extensions.getByType<MetaborgExtension>()
-    fun Wrapper.configureWrapperTask() {
-        gradleVersion = extension.gradleWrapperVersion
-        distributionType = extension.gradleWrapperDistribution
-        setJarFile(".gradlew/wrapper/gradle-wrapper.jar")
-    }
-    try {
-        tasks.named<Wrapper>("wrapper") {
-            configureWrapperTask()
-        }
-    } catch (e: UnknownTaskException) {
-        // Create wrapper task if it does not exist (which seems to be the case for sub projects of root projects)
-        tasks.register("wrapper", Wrapper::class.java) {
-            configureWrapperTask()
         }
     }
 }

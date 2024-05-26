@@ -12,8 +12,6 @@ open class MetaborgExtension(private val project: Project) {
     }
 
 
-    var gradleWrapperVersion = "6.8"
-    var gradleWrapperDistribution = Wrapper.DistributionType.BIN
     var javaVersion = JavaVersion.VERSION_1_8
     var javaCreatePublication = true
     var javaCreateSourcesJar = true
