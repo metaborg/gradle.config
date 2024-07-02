@@ -68,8 +68,8 @@ private fun Project.configurePublishingRepositories() {
                 name = repoName
                 url = repoUrl
                 credentials {
-                    username = project.findProperty("$propPrefix.username")?.toString()
-                    password = project.findProperty("$propPrefix.password")?.toString()
+                    username = project.findProperty("$propPrefix.username")?.toString() ?: System.getenv("METABORG_ARTIFACTS_USERNAME")
+                    password = project.findProperty("$propPrefix.password")?.toString() ?: System.getenv("METABORG_ARTIFACTS_PASSWORD")
                 }
             }
         }
