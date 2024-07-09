@@ -6,6 +6,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 ## [Unreleased]
 
 
+## [0.7.0] - 2024-07-09
+- *Breaking*: the default Java version is now set to Java 17.
+
+
 ## [0.6.0] - 2024-06-02
 - Allow the Metaborg publishing repository's username and password to be specified through the `METABORG_ARTIFACTS_USERNAME` and `METABORG_ARTIFACTS_PASSWORD` environment variables, respectively. If this information is also provided through the existing Gradle properties `publish.repository.metaborg.artifacts.username` and `publish.repository.metaborg.artifacts.password`, the Gradle properties take precedence.
 - Update to Gitonium 1.2.0
@@ -71,7 +75,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.6.0...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.7.0...HEAD
+[0.7.0]: https://github.com/metaborg/gradle.config/compare/release-0.6.0...release-0.7.0
 [0.6.0]: https://github.com/metaborg/gradle.config/compare/release-0.5.7...release-0.6.0
 [0.5.7]: https://github.com/metaborg/gradle.config/compare/release-0.5.6...release-0.5.7
 [0.5.6]: https://github.com/metaborg/gradle.config/compare/release-0.5.5...release-0.5.6
