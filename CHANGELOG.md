@@ -5,9 +5,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 ## [Unreleased]
 
+## [0.7.1] - 2024-07-09
+- *Breaking*: Update Kotlin to 1.7.10 (for Gradle 7.6.4).
+
 
 ## [0.7.0] - 2024-07-09
-- *Breaking*: the default Java version is now set to Java 17.
+- *Breaking*: Update the default Java version to 17.
 
 
 ## [0.6.0] - 2024-06-02
@@ -75,7 +78,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
 
 
-[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.7.0...HEAD
+[Unreleased]: https://github.com/metaborg/gradle.config/compare/release-0.7.1...HEAD
+[0.7.1]: https://github.com/metaborg/gradle.config/compare/release-0.7.0...release-0.7.1
 [0.7.0]: https://github.com/metaborg/gradle.config/compare/release-0.6.0...release-0.7.0
 [0.6.0]: https://github.com/metaborg/gradle.config/compare/release-0.5.7...release-0.6.0
 [0.5.7]: https://github.com/metaborg/gradle.config/compare/release-0.5.6...release-0.5.7
