@@ -2,14 +2,14 @@ plugins {
     id("org.metaborg.gradle.config.root-project") version "0.5.6"         // Bootstrap
     id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.5.6" // Bootstrap
     id("org.metaborg.gitonium") version "1.2.0"
-    kotlin("jvm") version "1.3.41" // Stick with 1.3.41: Gradle 5.6.4's kotlin-dsl plugin uses it.
+    kotlin("jvm") version "1.7.10" // Stick with 1.7.10: Gradle 7.6.4's kotlin-dsl plugin uses it.
     `kotlin-dsl`
     `maven-publish`
 }
 
 metaborg {
-    kotlinApiVersion = "1.3"
-    kotlinLanguageVersion = "1.3"
+    kotlinApiVersion = "1.4"
+    kotlinLanguageVersion = "1.4"
 }
 
 repositories {
@@ -20,8 +20,8 @@ dependencies {
     implementation("org.eclipse.jgit:org.eclipse.jgit:5.10.0.202012080955-r")
 
     // Compile-only dependencies for Gradle plugins that we need to use types from, but should still be applied/provided by users.
-    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.61")
-    compileOnly("org.gradle.kotlin:plugins:1.3.2")
+    compileOnly("org.jetbrains.kotlin:kotlin-gradle-plugin:1.7.10")
+    compileOnly("org.gradle.kotlin:gradle-kotlin-dsl-plugins:4.4.0")
 
     testImplementation("io.kotest:kotest-runner-junit5:4.2.0")
     testImplementation("io.kotest:kotest-assertions-core:4.2.0")
