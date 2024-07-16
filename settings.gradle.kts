@@ -14,7 +14,7 @@ dependencyResolutionManagement {
     }
     versionCatalogs {
         create("libs") {
-            from("org.metaborg.spoofax3:catalog:0.3.3")
+            from("org.metaborg:catalog:0.6.4")
         }
     }
 }
