@@ -4,6 +4,7 @@ rootProject.name = "gradle.config"
 pluginManagement {
     repositories {
         maven("https://artifacts.metaborg.org/content/groups/public/")
+        mavenCentral()
     }
 }
 
@@ -11,6 +12,7 @@ pluginManagement {
 dependencyResolutionManagement {
     repositories {
         maven("https://artifacts.metaborg.org/content/groups/public/")
+        mavenCentral()
     }
     versionCatalogs {
         create("libs") {
