@@ -12,7 +12,7 @@ open class MetaborgExtension(private val project: Project) {
     }
 
 
-    var javaVersion = JavaVersion.VERSION_17
+    var javaVersion = JavaVersion.VERSION_11
     var javaCreatePublication = true
     var javaCreateSourcesJar = true
     var javaPublishSourcesJar = true
