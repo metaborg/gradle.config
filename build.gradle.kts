@@ -1,6 +1,6 @@
 plugins {
-    id("org.metaborg.gradle.config.root-project") version "0.7.2"         // Bootstrap
-    id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.7.2" // Bootstrap
+    id("org.metaborg.gradle.config.root-project") version "0.7.3"         // Bootstrap
+    id("org.metaborg.gradle.config.kotlin-gradle-plugin") version "0.7.3" // Bootstrap
     id("org.metaborg.gitonium") version "1.2.0"
     kotlin("jvm") version "1.7.10" // Stick with 1.7.10: Gradle 7.6.4's kotlin-dsl plugin uses it.
     `kotlin-dsl`
