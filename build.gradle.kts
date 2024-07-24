@@ -8,6 +8,7 @@ plugins {
 }
 
 version = gitonium.version
+group = "org.metaborg"
 
 metaborg {
     kotlinApiVersion = "1.4"
@@ -86,3 +87,4 @@ gradlePlugin {
 tasks.withType<Test>().configureEach {
     useJUnitPlatform()
 }
+
